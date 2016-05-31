@@ -1,0 +1,12 @@
+# Some files
+*~
+*.pyc
+
+# Some dirs
+.idea
+dist
+*.egg-info
+env
+.coverage
+.cache
+htmlcov
