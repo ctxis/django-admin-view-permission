@@ -3,3 +3,4 @@
 pytest-django
 pytest-xdist
 pytest-cov
+coveralls
