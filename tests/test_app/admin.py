@@ -1,26 +1,20 @@
 from django.contrib import admin
-
+from admin_view_permission import admin as view_admin
 from .models import *
 
 
-class ModelAdmin2(admin.ModelAdmin):
-    fields = ['var1']
+class StackedModelAdmin(admin.StackedInline):
+    model = TestModel2
 
 
-class ModelAdmin3(admin.ModelAdmin):
-    fields = ['var2']
-    fieldsets = (
-        (None, {
-            'fields': ('var1', 'var2')
-        }),
-        ('Advanced options', {
-            'classes': ('collapse',),
-            'fields': ('var3',),
-        }),
-    )
+class TabularModelAdmin(admin.TabularInline):
+    model = TestModel3
 
 
-admin.site.register(TestModel0)
-admin.site.register(TestModel1)
-admin.site.register(TestModel2, ModelAdmin2)
-admin.site.register(TestModel3, ModelAdmin3)
+class ModelAdmin1(view_admin.AdminViewPermissionModelAdmin):
+    inlines = [
+        StackedModelAdmin,
+        TabularModelAdmin
+    ]
+
+admin.site.register(TestModel1, ModelAdmin1)

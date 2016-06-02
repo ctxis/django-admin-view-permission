@@ -13,20 +13,20 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import ugettext as _
 
-
 SETTINGS_MODELS = getattr(settings, 'ADMIN_VIEW_PERMISSION_MODELS', None)
 
 
 class AdminViewPermissionChangeList(ChangeList):
-
     def __init__(self, *args, **kwargs):
         super(AdminViewPermissionChangeList, self).__init__(*args, **kwargs)
         # TODO: Exam if is None
         self.request = args[0]
 
-        # If user has only view permission change the title of the changelist view
+        # If user has only view permission change the title of the changelist
+        # view
         if self.model_admin.has_view_permission(self.request) and \
-                not self.model_admin.has_change_permission(self.request, only_change=True):
+                not self.model_admin.has_change_permission(self.request,
+                                                           only_change=True):
             if self.is_popup:
                 title = _('Select %s')
             else:
@@ -35,7 +35,6 @@ class AdminViewPermissionChangeList(ChangeList):
 
 
 class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
-
     def get_queryset(self, request):
         """
         Returns a QuerySet of all model instances that can be edited by the
@@ -49,7 +48,8 @@ class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
         return qs
 
     def get_fields(self, request, obj=None):
-        fields = super(AdminViewPermissionInlineModelAdmin, self).get_fields(request, obj)
+        fields = super(AdminViewPermissionInlineModelAdmin, self).get_fields(
+            request, obj)
         readonly_fields = self.get_readonly_fields(request, obj)
         return [i for i in fields if i in readonly_fields]
 
@@ -58,16 +58,17 @@ class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
         Return all fields as readonly for the view permission
         """
         local_fields = [field.name for field in self.opts.local_fields]
-        many_to_many_fields = [field.name for field in self.opts.local_many_to_many]
+        many_to_many_fields = [field.name for field in
+                               self.opts.local_many_to_many]
         all_fields = local_fields + many_to_many_fields
         if self.fields:
-            defined_admin_fields = [field for field in self.fields if field not in all_fields]
+            defined_admin_fields = [field for field in self.fields if
+                                    field not in all_fields]
             all_fields += defined_admin_fields
         return list(all_fields)
 
 
 class AdminViewPermissionModelAdmin(admin.ModelAdmin):
-
     def get_changelist(self, request, **kwargs):
         """
         Returns the ChangeList class for use on the changelist page.
@@ -77,8 +78,8 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
     def get_model_perms(self, request):
         """
         Returns a dict of all perms for this model. This dict has the keys
-        ``add``, ``change``, ``delete`` and ``view`` mapping to the True/False for each
-        of those actions.
+        ``add``, ``change``, ``delete`` and ``view`` mapping to the True/False
+        for each of those actions.
         """
         return {
             'add': self.has_add_permission(request),
@@ -98,11 +99,13 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None, only_change=False):
         """
-        Override this method in order to return True whenever a user has view permission
-        and avoid re-implementing the change_view and changelist_view views. Also, added an
-        extra argument to determine whenever this function will return the original response
+        Override this method in order to return True whenever a user has view
+        permission and avoid re-implementing the change_view and
+        changelist_view views. Also, added an extra argument to determine
+        whenever this function will return the original response
         """
-        change_permission = super(AdminViewPermissionModelAdmin, self).has_change_permission(request, obj)
+        change_permission = super(AdminViewPermissionModelAdmin,
+                                  self).has_change_permission(request, obj)
         if only_change:
             return change_permission
         else:
@@ -113,17 +116,19 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
 
     def get_fields(self, request, obj=None):
         """
-        If the user has only the view permission return these readonly fields which are in fields
-        attr
+        If the user has only the view permission return these readonly fields
+        which are in fields attr
         """
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
-            fields = super(AdminViewPermissionModelAdmin, self).get_fields(request, obj)
+            fields = super(AdminViewPermissionModelAdmin, self).get_fields(
+                request, obj)
             readonly_fields = self.get_readonly_fields(request, obj)
             new_fields = [i for i in fields if i in readonly_fields]
-            return tuple(new_fields)
+            return new_fields
         else:
-            return super(AdminViewPermissionModelAdmin, self).get_fields(request, obj)
+            return super(AdminViewPermissionModelAdmin, self).get_fields(
+                request, obj)
 
     def get_readonly_fields(self, request, obj=None):
         """
@@ -131,12 +136,18 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
         """
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
-            return list(
+            readonly_fields = list(
                 [field.name for field in self.opts.local_fields] +
                 [field.name for field in self.opts.local_many_to_many]
             )
+            try:
+                readonly_fields.remove('id')
+                return tuple(readonly_fields)
+            except ValueError:
+                pass
         else:
-            return super(AdminViewPermissionModelAdmin, self).get_readonly_fields(request, obj)
+            return super(AdminViewPermissionModelAdmin,
+                         self).get_readonly_fields(request, obj)
 
     def get_actions(self, request):
         """
@@ -146,7 +157,8 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
                 not self.has_change_permission(request, only_change=True):
             return None
         else:
-            return super(AdminViewPermissionModelAdmin, self).get_actions(request)
+            return super(AdminViewPermissionModelAdmin, self).get_actions(
+                request)
 
     def get_inline_instances(self, request, obj=None):
         inline_instances = []
@@ -157,9 +169,10 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
                 inline_class.can_delete = False
                 inline_class.max_num = 0
                 inline_class.extra = 2
-                new_class = type(str('DynamicAdminViewPermissionInlineModelAdmin'),
-                                 (inline_class, AdminViewPermissionInlineModelAdmin),
-                                 dict(inline_class.__dict__))
+                new_class = type(
+                    str('DynamicAdminViewPermissionInlineModelAdmin'),
+                    (inline_class, AdminViewPermissionInlineModelAdmin),
+                    dict(inline_class.__dict__))
                 inline = new_class(self.model, self.admin_site)
             else:
                 inline = inline_class(self.model, self.admin_site)
@@ -169,8 +182,8 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         """
-        Override this function to hide the sumbit row from the user who has view only
-        permission
+        Override this function to hide the sumbit row from the user who has
+        view only permission
         """
         model = self.model
         opts = model._meta
@@ -183,15 +196,18 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
             extra_context = extra_context or {}
-            extra_context['title'] = _('View %s') % force_text(opts.verbose_name)
+            extra_context['title'] = _('View %s') % force_text(
+                opts.verbose_name)
             extra_context['show_save'] = False
             extra_context['show_save_and_continue'] = False
 
-        return super(AdminViewPermissionModelAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return super(AdminViewPermissionModelAdmin, self).change_view(request,
+                                                                      object_id,
+                                                                      form_url,
+                                                                      extra_context)
 
 
 class AdminViewPermissionAdminSite(admin.AdminSite):
-
     def register(self, model_or_iterable, admin_class=None, **options):
         """
         Create a new ModelAdmin class which inherits from the original and the above and register
@@ -202,28 +218,33 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
             models = tuple([model_or_iterable])
 
         if SETTINGS_MODELS or \
-                (isinstance(SETTINGS_MODELS, list or tuple) and len(SETTINGS_MODELS) == 0):
+                (isinstance(SETTINGS_MODELS, list or tuple) and len(
+                    SETTINGS_MODELS) == 0):
             for model in models:
                 if model._meta.label in SETTINGS_MODELS:
                     if admin_class:
-                        admin_class = type(str('DynamicAdminViewPermissionModelAdmin'),
-                                           (admin_class, AdminViewPermissionModelAdmin),
-                                           dict(admin_class.__dict__))
+                        admin_class = type(
+                            str('DynamicAdminViewPermissionModelAdmin'),
+                            (admin_class, AdminViewPermissionModelAdmin),
+                            dict(admin_class.__dict__))
                     else:
                         admin_class = AdminViewPermissionModelAdmin
 
                 super(AdminViewPermissionAdminSite, self).register(model,
-                                                                   admin_class, **options)
+                                                                   admin_class,
+                                                                   **options)
         else:
             if admin_class:
                 admin_class = type(str('DynamicAdminViewPermissionModelAdmin'),
-                                   (admin_class, AdminViewPermissionModelAdmin),
+                                   (
+                                   admin_class, AdminViewPermissionModelAdmin),
                                    dict(admin_class.__dict__))
             else:
                 admin_class = AdminViewPermissionModelAdmin
 
-            super(AdminViewPermissionAdminSite, self).register(model_or_iterable,
-                                                               admin_class, **options)
+            super(AdminViewPermissionAdminSite, self).register(
+                model_or_iterable,
+                admin_class, **options)
 
     def _build_app_dict(self, request, label=None):
         """
@@ -236,7 +257,7 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
             models = {
                 m: m_a for m, m_a in self._registry.items()
                 if m._meta.app_label == label
-            }
+                }
         else:
             models = self._registry
 
@@ -264,12 +285,14 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
             }
             if perms.get('change') or perms.get('view'):
                 try:
-                    model_dict['admin_url'] = reverse('admin:%s_%s_changelist' % info, current_app=self.name)
+                    model_dict['admin_url'] = reverse(
+                        'admin:%s_%s_changelist' % info, current_app=self.name)
                 except NoReverseMatch:
                     pass
             if perms.get('add'):
                 try:
-                    model_dict['add_url'] = reverse('admin:%s_%s_add' % info, current_app=self.name)
+                    model_dict['add_url'] = reverse('admin:%s_%s_add' % info,
+                                                    current_app=self.name)
                 except NoReverseMatch:
                     pass
 
