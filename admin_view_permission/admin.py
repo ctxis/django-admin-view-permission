@@ -40,35 +40,70 @@ class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
         Returns a QuerySet of all model instances that can be edited by the
         admin site. This is used by changelist_view.
         """
-        qs = self.model._default_manager.get_queryset()
-        # TODO: this should be handled by some parameter to the ChangeList.
-        ordering = self.get_ordering(request)
-        if ordering:
-            qs = qs.order_by(*ordering)
-        return qs
+        if self.has_parent_view_permission(request):
+            qs = self.model._default_manager.get_queryset()
+            # TODO: this should be handled by some parameter to the ChangeList.
+            ordering = self.get_ordering(request)
+            if ordering:
+                qs = qs.order_by(*ordering)
+            return qs
+        else:
+            return super(AdminViewPermissionInlineModelAdmin,
+                         self).get_queryset(request)
 
     def get_fields(self, request, obj=None):
-        fields = super(AdminViewPermissionInlineModelAdmin, self).get_fields(
-            request, obj)
-        readonly_fields = self.get_readonly_fields(request, obj)
-        return [i for i in fields if i in readonly_fields]
+        if self.has_parent_view_permission(request, obj):
+            fields = super(AdminViewPermissionInlineModelAdmin, self).get_fields(
+                request, obj)
+            readonly_fields = self.get_readonly_fields(request, obj)
+            return [i for i in fields if i in readonly_fields]
+        else:
+            return super(AdminViewPermissionInlineModelAdmin,
+                         self).get_fields(request, obj)
 
     def get_readonly_fields(self, request, obj=None):
         """
         Return all fields as readonly for the view permission
         """
-        local_fields = [field.name for field in self.opts.local_fields]
-        many_to_many_fields = [field.name for field in
-                               self.opts.local_many_to_many]
-        all_fields = local_fields + many_to_many_fields
-        if self.fields:
-            defined_admin_fields = [field for field in self.fields if
-                                    field not in all_fields]
-            all_fields += defined_admin_fields
-        return list(all_fields)
+        if self.has_parent_view_permission(request, obj):
+            readonly_fields = list(
+                [field.name for field in self.opts.local_fields] +
+                [field.name for field in self.opts.local_many_to_many]
+            )
+
+            try:
+                readonly_fields.remove('id')
+            except ValueError:
+                pass
+
+            if self.fields:
+                # Add the custom admin fields
+                defined_admin_fields = [field for field in self.fields if
+                                        field not in readonly_fields]
+                readonly_fields += defined_admin_fields
+            return tuple(readonly_fields)
+        else:
+            return super(AdminViewPermissionInlineModelAdmin,
+                         self).get_readonly_fields(request, obj)
+
+
+    def has_parent_view_permission(self, request, obj=None):
+        if getattr(self.parent_model, 'assigned_modeladmin', None):
+            parent_modeladmin = self.parent_model.assigned_modeladmin
+            return parent_modeladmin.has_view_permission(request, obj) \
+                   and not parent_modeladmin.has_change_permission(request,
+                                                                   obj, True)
+
+        return False
 
 
 class AdminViewPermissionModelAdmin(admin.ModelAdmin):
+
+    def __init__(self, model, admin_site):
+        super(AdminViewPermissionModelAdmin, self).__init__(model, admin_site)
+        # Contibute this class to the model
+        setattr(self.model, 'assigned_modeladmin', self)
+
     def get_changelist(self, request, **kwargs):
         """
         Returns the ChangeList class for use on the changelist page.
@@ -166,13 +201,12 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
             if self.has_view_permission(request) and \
                     not self.has_change_permission(request, only_change=True):
 
-                inline_class.can_delete = False
-                inline_class.max_num = 0
-                inline_class.extra = 2
                 new_class = type(
                     str('DynamicAdminViewPermissionInlineModelAdmin'),
                     (inline_class, AdminViewPermissionInlineModelAdmin),
                     dict(inline_class.__dict__))
+                new_class.can_delete = False
+                new_class.max_num = 0
                 inline = new_class(self.model, self.admin_site)
             else:
                 inline = inline_class(self.model, self.admin_site)
@@ -237,7 +271,8 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
             if admin_class:
                 admin_class = type(str('DynamicAdminViewPermissionModelAdmin'),
                                    (
-                                   admin_class, AdminViewPermissionModelAdmin),
+                                       admin_class,
+                                       AdminViewPermissionModelAdmin),
                                    dict(admin_class.__dict__))
             else:
                 admin_class = AdminViewPermissionModelAdmin

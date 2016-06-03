@@ -9,7 +9,7 @@ from django.core.urlresolvers import reverse
 from django.contrib import admin
 
 from test_app.models import *
-from test_app.admin import ModelAdmin1
+from test_app.admin import ModelAdmin1, InlineModelAdmin1
 
 
 class BaseTestCase(TestCase):
@@ -54,6 +54,15 @@ class AdminViewPermissionTestCase(BaseTestCase):
         super(AdminViewPermissionTestCase, cls).setUpClass()
         cls.factory = RequestFactory()
         cls.simple_user.user_permissions.set([cls.permission_testmodel1])
+
+
+class AdminViewPermissionInlinesTestCase(AdminViewPermissionTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(AdminViewPermissionInlinesTestCase, cls).setUpClass()
+        cls.inlinemodeladmin_testmodel4 = InlineModelAdmin1(TestModel1,
+                                                            admin.site)
 
 
 class AdminViewPermissionViewsTestCase(BaseTestCase):

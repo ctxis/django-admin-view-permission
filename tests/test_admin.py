@@ -4,7 +4,7 @@ import pytest
 
 from admin_view_permission.admin import AdminViewPermissionInlineModelAdmin
 
-from .helpers import AdminViewPermissionTestCase
+from .helpers import AdminViewPermissionTestCase, AdminViewPermissionInlinesTestCase
 
 
 @pytest.mark.usefixtures("simple_add_request", "simple_change_request",
@@ -52,10 +52,12 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
 
     def test_get_fields_super_user_1(self):
         fields = self.modeladmin_testmodel1.get_fields(self.super_add_request)
+
         assert fields == ['var1', 'var2', 'var3', 'var4']
 
     def test_get_fields_super_user_2(self):
         fields = self.modeladmin_testmodel1.get_fields(self.super_change_request)
+
         assert fields == ['var1', 'var2', 'var3', 'var4']
 
 ## get_actions
@@ -130,14 +132,18 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
             self.super_add_request)
 
         for inline in inlines:
-            assert not isinstance(inline, AdminViewPermissionInlineModelAdmin)
+            if inline.model._meta.model_name != 'testmodel4':
+                assert not isinstance(inline,
+                                      AdminViewPermissionInlineModelAdmin)
 
     def test_get_inline_instances_super_user_2(self):
         inlines = self.modeladmin_testmodel1.get_inline_instances(
             self.super_change_request)
 
         for inline in inlines:
-            assert not isinstance(inline, AdminViewPermissionInlineModelAdmin)
+            if inline.model._meta.model_name != 'testmodel4':
+                assert not isinstance(inline,
+                                      AdminViewPermissionInlineModelAdmin)
 
 ## get_model_perms
 
@@ -192,6 +198,64 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
             self.super_change_request, str(self.object_testmodel1.pk))
 
         assert change_view.context_data['title'] == 'Change test model1'
+
+
+@pytest.mark.usefixtures("simple_add_request", "simple_change_request",
+                         "super_add_request", "super_change_request",
+                         "simple_changelist_request", "super_changelist_request")
+class TestAdminViewPermissionInlineModelAdmin(AdminViewPermissionInlinesTestCase):
+
+## readonly_fields
+
+    def test_get_readonly_fields_simple_user_1(self):
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.simple_add_request)
+
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_simple_user_2(self):
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.simple_change_request, self.object_testmodel1)
+
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_super_user_1(self):
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.super_add_request)
+
+        assert readonly_fields == ()
+
+    def test_get_readonly_fields_super_user_2(self):
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.super_change_request, self.object_testmodel1)
+
+        assert readonly_fields == ()
+
+## get_fields
+
+    def test_get_fields_simple_user_1(self):
+        fields = self.inlinemodeladmin_testmodel4.get_fields(
+            self.simple_add_request)
+
+        assert fields == ['var1', 'var2', 'var3', 'var4']
+
+    def test_get_fields_simple_user_2(self):
+        fields = self.inlinemodeladmin_testmodel4.get_fields(
+            self.simple_change_request)
+
+        assert fields == ['var1', 'var2', 'var3', 'var4']
+
+    def test_get_fields_super_user_1(self):
+        fields = self.inlinemodeladmin_testmodel4.get_fields(
+            self.super_add_request)
+
+        assert fields == ['var1', 'var2', 'var3', 'var4']
+
+    def test_get_fields_super_user_2(self):
+        fields = self.inlinemodeladmin_testmodel4.get_fields(
+            self.super_change_request)
+
+        assert fields == ['var1', 'var2', 'var3', 'var4']
 
 
 '''class TestAdminViewPermissionAdminSite(SimpleTestCase):

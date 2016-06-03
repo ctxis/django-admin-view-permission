@@ -27,4 +27,11 @@ class TestModel3(models.Model):
     var1 = models.ForeignKey(TestModel1)
     var2 = models.CharField(max_length=200)
     var3 = models.TextField()
-    var4 = models.IntegerField
+    var4 = models.IntegerField()
+
+
+class TestModel4(models.Model):
+    var1 = models.ForeignKey(TestModel1)
+    var2 = models.CharField(max_length=200)
+    var3 = models.TextField()
+    var4 = models.IntegerField()
