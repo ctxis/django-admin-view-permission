@@ -10,7 +10,7 @@ python:
 install: pip install -r requirements-debug.txt
 
 # command to run tests
-script: PYTHONPATH=`pwd` py.test --cov-report html --cov=admin_view_permission tests/
+script: PYTHONPATH=`pwd` py.test --cov-report html --cov=admin_view_permission -v tests/
 
 # report coverage to coveralls.io
 after_success: coveralls

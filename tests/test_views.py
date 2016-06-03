@@ -1,48 +1,11 @@
 from __future__ import unicode_literals
 
-from django.test import TestCase, Client, RequestFactory
-from django.contrib import admin as default_admin
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.core.urlresolvers import reverse
 
-from admin_view_permission.admin import *
-
-from test_app.models import *
-from test_app.admin import ModelAdmin1
+from .helpers import AdminViewPermissionViewsTestCase
 
 
-class TestModelAdminViews(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.super_user = get_user_model().objects.create_superuser(
-            username='super_user',
-            email='',
-            password='super_user',
-        )
-        self.simple_user = get_user_model().objects.create_user(
-            username='simple_user',
-            password='simple_user',
-            is_staff=True
-        )
-        self.object_testmodel0 = TestModel0.objects.create(
-            var1='Test',
-            var2='Test',
-            var3=5
-        )
-        self.object_testmodel1 = TestModel1.objects.create(
-            var1='Test',
-            var2='Test',
-            var3=5,
-        )
-        self.object_testmodel1.var4.add(self.object_testmodel0)
-
-
-        self.permission = Permission.objects.get(name='Can view testmodel1')
-        self.super_user.user_permissions.set([self.permission])
-        self.simple_user.user_permissions.set([self.permission])
-
-    def tearDown(self):
-        self.client.logout()
+class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     def test_index_view_super_user(self):
         self.client.login(username='super_user', password='super_user')
