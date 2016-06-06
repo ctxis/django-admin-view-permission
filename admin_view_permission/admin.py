@@ -13,8 +13,6 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import ugettext as _
 
-SETTINGS_MODELS = getattr(settings, 'ADMIN_VIEW_PERMISSION_MODELS', None)
-
 
 class AdminViewPermissionChangeList(ChangeList):
     def __init__(self, *args, **kwargs):
@@ -254,13 +252,14 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
         Create a new ModelAdmin class which inherits from the original and the above and register
         all models with that
         """
+        SETTINGS_MODELS = getattr(settings, 'ADMIN_VIEW_PERMISSION_MODELS', None)
+
         models = model_or_iterable
         if not isinstance(model_or_iterable, tuple):
             models = tuple([model_or_iterable])
 
-        if SETTINGS_MODELS or \
-                (isinstance(SETTINGS_MODELS, list or tuple) and len(
-                    SETTINGS_MODELS) == 0):
+        if SETTINGS_MODELS or (SETTINGS_MODELS is not None and len(
+                SETTINGS_MODELS) == 0):
             for model in models:
                 if model._meta.label in SETTINGS_MODELS:
                     if admin_class:

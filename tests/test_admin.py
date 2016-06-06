@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import pytest
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 from admin_view_permission.admin import AdminViewPermissionInlineModelAdmin, \
     AdminViewPermissionModelAdmin, AdminViewPermissionAdminSite
@@ -11,6 +11,7 @@ from .helpers import AdminViewPermissionTestCase, \
     AdminViewPermissionInlinesTestCase
 
 from test_app.models import *
+from test_app.admin import *
 
 
 @pytest.mark.usefixtures("simple_request", "super_request")
@@ -356,7 +357,43 @@ class TestAdminViewPermissionAdminSite(SimpleTestCase):
     def setUp(self):
         self.admin_site = AdminViewPermissionAdminSite('admin')
 
-    def test_register(self):
+    def test_register_1(self):
         self.admin_site.register(TestModel1)
         assert isinstance(self.admin_site._registry[TestModel1],
                           AdminViewPermissionModelAdmin)
+
+    def test_register_2(self):
+        modeladmin1 = type(b'TestModelAdmin1', (admin.ModelAdmin, ), {})
+        self.admin_site.register(TestModel1, modeladmin1)
+        assert isinstance(self.admin_site._registry[TestModel1],
+                          AdminViewPermissionModelAdmin)
+        assert isinstance(self.admin_site._registry[TestModel1],
+                          modeladmin1)
+
+    @override_settings(ADMIN_VIEW_PERMISSION_MODELS=['test_app.TestModel1', ])
+    def test_register_3(self):
+        self.admin_site.register(TestModel1)
+        assert isinstance(self.admin_site._registry[TestModel1],
+                          AdminViewPermissionModelAdmin)
+
+    @override_settings(ADMIN_VIEW_PERMISSION_MODELS=['test_app.TestModel1', ])
+    def test_register_4(self):
+        modeladmin1 = type(b'TestModelAdmin1', (admin.ModelAdmin, ), {})
+        self.admin_site.register(TestModel1, modeladmin1)
+        assert isinstance(self.admin_site._registry[TestModel1],
+                          AdminViewPermissionModelAdmin)
+        assert isinstance(self.admin_site._registry[TestModel1],
+                          modeladmin1)
+
+    @override_settings(ADMIN_VIEW_PERMISSION_MODELS=[])
+    def test_register_5(self):
+        self.admin_site.register(TestModel1)
+        assert not isinstance(self.admin_site._registry[TestModel1],
+                          AdminViewPermissionModelAdmin)
+
+    @override_settings(ADMIN_VIEW_PERMISSION_MODELS=())
+    def test_register_6(self):
+        self.admin_site.register(TestModel1)
+        assert not isinstance(self.admin_site._registry[TestModel1],
+                          AdminViewPermissionModelAdmin)
+
