@@ -21,56 +21,18 @@ def fixture_add_request(request, rf):
 """
 
 @pytest.fixture
-def simple_add_request(request, rf):
+def simple_request(request, rf):
     fixture_request = rf.get(
-        reverse('admin:%s_%s_add' % ('test_app', 'testmodel1'))
+        reverse('admin:index')
     )
     fixture_request.user = request.cls.simple_user
-    request.cls.simple_add_request = fixture_request
+    request.cls.simple_request = fixture_request
 
 
 @pytest.fixture
-def simple_change_request(request, rf):
+def super_request(request, rf):
     fixture_request = rf.get(
-        reverse('admin:%s_%s_change' % ('test_app', 'testmodel1'),
-                args=(request.cls.object_testmodel1.pk, ))
-    )
-    fixture_request.user = request.cls.simple_user
-    request.cls.simple_change_request = fixture_request
-
-
-@pytest.fixture
-def super_add_request(request, rf):
-    fixture_request = rf.get(
-        reverse('admin:%s_%s_add' % ('test_app', 'testmodel1'))
+        reverse('admin:index')
     )
     fixture_request.user = request.cls.super_user
-    request.cls.super_add_request = fixture_request
-
-
-@pytest.fixture
-def super_change_request(request, rf):
-    fixture_request = rf.get(
-        reverse('admin:%s_%s_change' % ('test_app', 'testmodel1'),
-                args=(request.cls.object_testmodel1.pk, ))
-    )
-    fixture_request.user = request.cls.super_user
-    request.cls.super_change_request = fixture_request
-
-
-@pytest.fixture
-def simple_changelist_request(request, rf):
-    fixture_request = rf.get(
-        reverse('admin:%s_%s_changelist' % ('test_app', 'testmodel1'))
-    )
-    fixture_request.user = request.cls.simple_user
-    request.cls.simple_changelist_request = fixture_request
-
-
-@pytest.fixture
-def super_changelist_request(request, rf):
-    fixture_request = rf.get(
-        reverse('admin:%s_%s_changelist' % ('test_app', 'testmodel1'))
-    )
-    fixture_request.user = request.cls.super_user
-    request.cls.super_changelist_request = fixture_request
+    request.cls.super_request = fixture_request

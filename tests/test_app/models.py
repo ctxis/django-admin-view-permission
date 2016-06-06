@@ -35,3 +35,21 @@ class TestModel4(models.Model):
     var2 = models.CharField(max_length=200)
     var3 = models.TextField()
     var4 = models.IntegerField()
+
+
+# Copy of the TestModel1 to exam model with different key
+class TestModel5(models.Model):
+    var0 = models.AutoField(primary_key=True)
+    var1 = models.CharField(max_length=200)
+    var2 = models.TextField()
+    var3 = models.IntegerField()
+    var4 = models.ManyToManyField(TestModel0)
+
+
+# Copy of the TestModel4 to exam model with different key
+class TestModel6(models.Model):
+    var0 = models.AutoField(primary_key=True)
+    var1 = models.ForeignKey(TestModel1)
+    var2 = models.CharField(max_length=200)
+    var3 = models.TextField()
+    var4 = models.IntegerField()

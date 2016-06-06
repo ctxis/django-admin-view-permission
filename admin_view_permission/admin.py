@@ -53,7 +53,8 @@ class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
 
     def get_fields(self, request, obj=None):
         if self.has_parent_view_permission(request, obj):
-            fields = super(AdminViewPermissionInlineModelAdmin, self).get_fields(
+            fields = super(AdminViewPermissionInlineModelAdmin,
+                           self).get_fields(
                 request, obj)
             readonly_fields = self.get_readonly_fields(request, obj)
             return [i for i in fields if i in readonly_fields]
@@ -71,21 +72,21 @@ class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
                 [field.name for field in self.opts.local_many_to_many]
             )
 
+            # Try to remove id if user have not specify fields and
+            # readonly fields
             try:
                 readonly_fields.remove('id')
             except ValueError:
                 pass
 
             if self.fields:
-                # Add the custom admin fields
-                defined_admin_fields = [field for field in self.fields if
-                                        field not in readonly_fields]
-                readonly_fields += defined_admin_fields
+                # Set as readonly fields the specified fields
+                readonly_fields = self.fields
+
             return tuple(readonly_fields)
         else:
             return super(AdminViewPermissionInlineModelAdmin,
                          self).get_readonly_fields(request, obj)
-
 
     def has_parent_view_permission(self, request, obj=None):
         if getattr(self.parent_model, 'assigned_modeladmin', None):
@@ -98,7 +99,6 @@ class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
 
 
 class AdminViewPermissionModelAdmin(admin.ModelAdmin):
-
     def __init__(self, model, admin_site):
         super(AdminViewPermissionModelAdmin, self).__init__(model, admin_site)
         # Contibute this class to the model
@@ -175,11 +175,18 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
                 [field.name for field in self.opts.local_fields] +
                 [field.name for field in self.opts.local_many_to_many]
             )
+            # Try to remove id if user have not specify fields and
+            # readonly fields
             try:
                 readonly_fields.remove('id')
-                return tuple(readonly_fields)
             except ValueError:
                 pass
+
+            if self.fields:
+                # Set as readonly fields the specified fields
+                readonly_fields = self.fields
+
+            return tuple(readonly_fields)
         else:
             return super(AdminViewPermissionModelAdmin,
                          self).get_readonly_fields(request, obj)
