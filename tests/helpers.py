@@ -1,17 +1,13 @@
 from __future__ import unicode_literals
 
-import pytest
-
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client
 from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user_model
-from django.core.urlresolvers import reverse
 from django.contrib import admin
 
-from test_app.models import *
-from test_app.admin import ModelAdmin1, ModelAdmin2, InlineModelAdmin1, \
+from .test_app.admin import ModelAdmin1, ModelAdmin2, InlineModelAdmin1, \
     InlineModelAdmin2
-
+from .test_app.models import TestModel0, TestModel1, TestModel5
 
 class BaseTestCase(TestCase):
 

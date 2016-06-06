@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import pytest
 
 from django.test import SimpleTestCase, override_settings
+from django.contrib import admin
 
 from admin_view_permission.admin import AdminViewPermissionInlineModelAdmin, \
     AdminViewPermissionModelAdmin, AdminViewPermissionAdminSite
@@ -10,8 +11,7 @@ from admin_view_permission.admin import AdminViewPermissionInlineModelAdmin, \
 from .helpers import AdminViewPermissionTestCase, \
     AdminViewPermissionInlinesTestCase
 
-from test_app.models import *
-from test_app.admin import *
+from .test_app.models import TestModel1
 
 
 @pytest.mark.usefixtures("simple_request", "super_request")
@@ -363,7 +363,7 @@ class TestAdminViewPermissionAdminSite(SimpleTestCase):
                           AdminViewPermissionModelAdmin)
 
     def test_register_2(self):
-        modeladmin1 = type(b'TestModelAdmin1', (admin.ModelAdmin, ), {})
+        modeladmin1 = type(str('TestModelAdmin1'), (admin.ModelAdmin, ), {})
         self.admin_site.register(TestModel1, modeladmin1)
         assert isinstance(self.admin_site._registry[TestModel1],
                           AdminViewPermissionModelAdmin)
@@ -378,7 +378,7 @@ class TestAdminViewPermissionAdminSite(SimpleTestCase):
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=['test_app.TestModel1', ])
     def test_register_4(self):
-        modeladmin1 = type(b'TestModelAdmin1', (admin.ModelAdmin, ), {})
+        modeladmin1 = type(str('TestModelAdmin1'), (admin.ModelAdmin, ), {})
         self.admin_site.register(TestModel1, modeladmin1)
         assert isinstance(self.admin_site._registry[TestModel1],
                           AdminViewPermissionModelAdmin)

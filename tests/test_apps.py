@@ -1,10 +1,8 @@
+from __future__ import unicode_literals
+
 from django.test import SimpleTestCase, override_settings
-from django.contrib import admin
+from django.apps import apps
 from django.db import models
-
-from admin_view_permission.apps import *
-
-from test_app.models import *
 
 
 class TestAdminViewPermissionConfig(SimpleTestCase):
@@ -14,8 +12,10 @@ class TestAdminViewPermissionConfig(SimpleTestCase):
         }
 
         self.appconfig = apps.get_app_config('admin_view_permission')
-        self.model1 = type('AppTestModel1', (models.Model, ), attrs.copy())
-        self.model2 = type('AppTestModel2', (models.Model, ), attrs.copy())
+        self.model1 = type(str('AppTestModel1'), (models.Model, ),
+                           attrs.copy())
+        self.model2 = type(str('AppTestModel2'), (models.Model, ),
+                           attrs.copy())
 
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=['test_app.AppTestModel1', ])
