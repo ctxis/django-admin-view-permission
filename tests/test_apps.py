@@ -27,14 +27,14 @@ class TestAdminViewPermissionConfig(SimpleTestCase):
 
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=[])
-    def test_read_without_model(self):
+    def test_ready_without_model_list(self):
         self.appconfig.ready()
         self.assertEqual(self.model1._meta.permissions, [])
         self.assertEqual(self.model2._meta.permissions, [])
 
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=())
-    def test_read_without_model(self):
+    def test_ready_without_model_tuple(self):
         self.appconfig.ready()
         self.assertEqual(self.model1._meta.permissions, [])
         self.assertEqual(self.model2._meta.permissions, [])
