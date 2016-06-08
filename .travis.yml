@@ -2,17 +2,25 @@
 
 language: python
 
+# diferrent python versions
 python:
   - "2.7"
   - "3.4"
   - "3.5"
 
-# command to install dependencies, e.g. pip install -r requirements.txt
-#--use-mirrors
-install: pip install -r requirements-debug.txt
+# diferrent django versions
+env:
+  - DJANGO=1.9
+  - DJANGO=1.8
 
-# command to run tests
-script: PYTHONPATH=`pwd` py.test --cov-report html --cov=admin_view_permission -v tests/
+# install dependencies
+install:
+  - pip install -r requirements-debug.txt
+  - pip install Django==$DJANGO
+
+# run tests
+script:
+  - PYTHONPATH=`pwd` py.test --cov-report html --cov=admin_view_permission -v tests/
 
 # report coverage to coveralls.io
 after_success: coveralls

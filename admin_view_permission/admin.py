@@ -13,6 +13,9 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.admin.views.main import ChangeList
 from django.utils.translation import ugettext as _
 
+from .utils import django_version
+from .enums import DjangoVersion
+
 
 class AdminViewPermissionChangeList(ChangeList):
     def __init__(self, *args, **kwargs):
@@ -261,7 +264,13 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
         if SETTINGS_MODELS or (SETTINGS_MODELS is not None and len(
                 SETTINGS_MODELS) == 0):
             for model in models:
-                if model._meta.label in SETTINGS_MODELS:
+                if django_version() == DjangoVersion.DJANGO_18:
+                    model_name = '%s.%s' %(model._meta.app_label,
+                                           model._meta.object_name)
+                elif django_version() == DjangoVersion.DJANGO_19:
+                    model_name = model._meta.label
+
+                if model_name in SETTINGS_MODELS:
                     if admin_class:
                         admin_class = type(
                             str('DynamicAdminViewPermissionModelAdmin'),

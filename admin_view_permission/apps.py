@@ -5,7 +5,8 @@ from django.apps import AppConfig, apps
 from django.contrib import admin
 
 from .admin import AdminViewPermissionAdminSite
-
+from .utils import django_version
+from .enums import DjangoVersion
 
 class AdminViewPermissionConfig(AppConfig):
     name = 'admin_view_permission'
@@ -23,7 +24,14 @@ class AdminViewPermissionConfig(AppConfig):
             for model in app.get_models():
                 if settings_models or (settings_models is not None and len(
                         settings_models) == 0):
-                    if model._meta.label in settings_models:
+
+                    if django_version() == DjangoVersion.DJANGO_18:
+                        model_name = '%s.%s' %(model._meta.app_label,
+                                               model._meta.object_name)
+                    elif django_version() == DjangoVersion.DJANGO_19:
+                        model_name = model._meta.label
+
+                    if model_name in settings_models:
                         model._meta.permissions = (
                             ('view_%s' % model._meta.model_name,
                              'Can view %s' % model._meta.model_name),)

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import django
 from django.test import TestCase, Client
 from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user_model
@@ -8,6 +9,7 @@ from django.contrib import admin
 from .test_app.admin import ModelAdmin1, ModelAdmin2, InlineModelAdmin1, \
     InlineModelAdmin2
 from .test_app.models import TestModel0, TestModel1, TestModel5
+
 
 class BaseTestCase(TestCase):
 
@@ -23,8 +25,11 @@ class BaseTestCase(TestCase):
         cls.simple_user = get_user_model().objects.create_user(
             username='simple_user',
             password='simple_user',
-            is_staff=True
         )
+        # Django 1.8 compatibility
+        cls.simple_user.is_staff = True
+        cls.simple_user.save()
+
         # Get the view permission for this model
         cls.permission_testmodel1 = Permission.objects.get(
             name='Can view testmodel1')
@@ -58,8 +63,8 @@ class AdminViewPermissionTestCase(BaseTestCase):
         # assigned_modeladmin attr. In the other tests we have to change them)
         self.modeladmin_testmodel1 = ModelAdmin1(TestModel1, admin.site)
         self.modeladmin_testmodel5 = ModelAdmin1(TestModel5, admin.site)
-        self.simple_user.user_permissions.set([self.permission_testmodel1,
-                                               self.permission_testmodel5])
+        self.simple_user.user_permissions.add(self.permission_testmodel1,
+                                               self.permission_testmodel5)
 
 
 class AdminViewPermissionInlinesTestCase(AdminViewPermissionTestCase):
@@ -71,15 +76,15 @@ class AdminViewPermissionInlinesTestCase(AdminViewPermissionTestCase):
                                                             admin.site)
         self.inlinemodeladmin_testmodel6 = InlineModelAdmin2(TestModel1,
                                                             admin.site)
-        self.simple_user.user_permissions.set([self.permission_testmodel1])
+        self.simple_user.user_permissions.add(self.permission_testmodel1)
 
 
 class AdminViewPermissionViewsTestCase(BaseTestCase):
 
     def setUp(self):
         self.client = Client()
-        self.simple_user.user_permissions.set([self.permission_testmodel1])
-        self.super_user.user_permissions.set([self.permission_testmodel1])
+        self.simple_user.user_permissions.add(self.permission_testmodel1)
+        self.super_user.user_permissions.add(self.permission_testmodel1)
 
     def tearDown(self):
         self.client.logout()
