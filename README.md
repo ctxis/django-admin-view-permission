@@ -6,7 +6,11 @@
 Reusable application which provides a view permission for the existing models.
 
 ## Requirements
-* Django: 1.9
+* Django
+
+## Support
+* Django: 1.8, 1.9
+* Python: 2.7, 3.4, 3.5
 
 ## Setup
 * `pip install https://github.com/ctxis/django-admin-view-permission/archive/master.zip`
