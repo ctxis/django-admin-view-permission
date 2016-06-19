@@ -18,7 +18,7 @@ Reusable application which provides a view permission for the existing models.
 and then add `admin_view_permission` at the INSTALLED_APPS like this:
 
     INSTALLED_APPS = [
-        'amdin_view_permission',
+        'admin_view_permission',
         'django.contrib.admin',
         ...
     ]
@@ -33,4 +33,5 @@ This app provides a setting:
         ...
     ]
 
-in which you can provide which models you want to be added the view permission.
+in which you can provide which models you want to be added the view permission. If you don't specify this setting then
+the view permission will be applied to all the models.
