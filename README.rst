@@ -28,9 +28,9 @@ Support
 Setup
 -----
 
-* `pip install https://github.com/ctxis/django-admin-view-permission/archive/master.zip`
+* ``pip install django-admin-view-permission``
 
-and then add `admin_view_permission` at the INSTALLED_APPS like this::
+and then add ``admin_view_permission`` at the INSTALLED_APPS like this::
 
     INSTALLED_APPS = [
         'admin_view_permission',
@@ -38,7 +38,7 @@ and then add `admin_view_permission` at the INSTALLED_APPS like this::
         ...
     ]
 
-and finally run `python manage.py migrate`.
+and finally run ``python manage.py migrate``.
 
 Configuration
 -------------
