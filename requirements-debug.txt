@@ -1,6 +1,11 @@
 -r requirements.txt
 
+# Unit-testing
 pytest-django
 pytest-xdist
 pytest-cov
 coveralls
+
+# Docs
+sphinx
+sphinx-autobuild
