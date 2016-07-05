@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-admin-view-permission',
-    version='0.1',
+    version='0.2',
     packages=['admin_view_permission'],
     include_package_data=True,
     license='BSD License',
@@ -18,6 +18,7 @@ setup(
     keywords = ['django', 'admin'],
     url='http://django-admin-view-permission.readthedocs.org/',
     classifiers=[
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
         'Framework :: Django :: 1.9',
