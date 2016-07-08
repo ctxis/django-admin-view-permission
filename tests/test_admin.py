@@ -2,22 +2,24 @@ from __future__ import unicode_literals
 
 import pytest
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase
+from django.test import override_settings
 from django.contrib import admin
 
-from admin_view_permission.admin import AdminViewPermissionInlineModelAdmin, \
-    AdminViewPermissionModelAdmin, AdminViewPermissionAdminSite
+from admin_view_permission.admin import AdminViewPermissionInlineModelAdmin
+from admin_view_permission.admin import AdminViewPermissionModelAdmin
+from admin_view_permission.admin import AdminViewPermissionAdminSite
 
-from .helpers import AdminViewPermissionTestCase, \
-    AdminViewPermissionInlinesTestCase
+from .helpers import AdminViewPermissionTestCase
+from .helpers import AdminViewPermissionInlinesTestCase
 
 from .test_app.models import TestModel1
 
 
 @pytest.mark.usefixtures("simple_request", "super_request")
-class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
+class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
-## readonly_fields
+    ## readonly_fields
 
     def test_get_readonly_fields_simple_user_1(self):
         readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
@@ -169,16 +171,13 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
         assert self.modeladmin_testmodel1.has_change_permission(
             self.super_request, self.object_testmodel1)
 
+
+@pytest.mark.usefixtures("simple_request", "super_request")
+class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
+
 ## get_inline_instances
 
     def test_get_inline_instances_simple_user_1(self):
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.simple_request)
-
-        for inline in inlines:
-            assert isinstance(inline, AdminViewPermissionInlineModelAdmin)
-
-    def test_get_inline_instances_simple_user_2(self):
         inlines = self.modeladmin_testmodel1.get_inline_instances(
             self.simple_request)
 
@@ -190,16 +189,9 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
             self.super_request)
 
         for inline in inlines:
-            assert not isinstance(inline, AdminViewPermissionInlineModelAdmin)
+            assert isinstance(inline, AdminViewPermissionInlineModelAdmin)
 
-    def test_get_inline_instances_super_user_2(self):
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.super_request)
-
-        for inline in inlines:
-            assert not isinstance(inline, AdminViewPermissionInlineModelAdmin)
-
-        ## get_model_perms
+## get_model_perms
 
     def test_get_model_perms_simple_user_1(self):
         assert self.modeladmin_testmodel1.get_model_perms(
@@ -254,7 +246,7 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
         assert change_view.context_data['title'] == 'Change test model1'
 
 
-@pytest.mark.usefixtures("simple_request", "super_request")
+@pytest.mark.usefixtures("simple_request", "simple_request_2", "super_request")
 class TestAdminViewPermissionInlineModelAdmin(
     AdminViewPermissionInlinesTestCase):
 
@@ -264,20 +256,20 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.simple_request)
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+        assert readonly_fields == ()
 
     def test_get_readonly_fields_simple_user_2(self):
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.simple_request, self.object_testmodel1)
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+        assert readonly_fields == ()
 
     def test_get_readonly_fields_simple_user_3(self):
         self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2']
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.simple_request)
 
-        assert readonly_fields == ('var1', 'var2')
+        assert readonly_fields == ()
 
     def test_get_readonly_fields_simple_user_4(self):
         self.inlinemodeladmin_testmodel4.fields = ['id']
@@ -291,7 +283,34 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel6.get_readonly_fields(
             self.simple_request)
 
-        assert readonly_fields == ('var0', 'var1', 'var2', 'var3', 'var4')
+        assert readonly_fields == ()
+
+    def test_get_readonly_fields_simple_user_6(self):
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.simple_request_2)
+
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_simple_user_7(self):
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.simple_request_2, self.object_testmodel1)
+
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_simple_user_8(self):
+        self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2']
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.simple_request_2)
+
+        assert readonly_fields == ('var1', 'var2')
+
+    def test_get_readonly_fields_simple_user_9(self):
+        self.inlinemodeladmin_testmodel4.fields = ['id']
+        self.inlinemodeladmin_testmodel4.readonly_fields = ('id',)
+        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
+            self.simple_request_2)
+
+        assert readonly_fields == ('id',)
 
     def test_get_readonly_fields_super_user_1(self):
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(

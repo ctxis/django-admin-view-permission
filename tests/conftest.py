@@ -30,6 +30,15 @@ def simple_request(request, rf):
 
 
 @pytest.fixture
+def simple_request_2(request, rf):
+    fixture_request = rf.get(
+        reverse('admin:index')
+    )
+    fixture_request.user = request.cls.simple_user_2
+    request.cls.simple_request_2 = fixture_request
+
+
+@pytest.fixture
 def super_request(request, rf):
     fixture_request = rf.get(
         reverse('admin:index')

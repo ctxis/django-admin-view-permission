@@ -29,10 +29,18 @@ class BaseTestCase(TestCase):
         # Django 1.8 compatibility
         cls.simple_user.is_staff = True
         cls.simple_user.save()
+        cls.simple_user_2 = get_user_model().objects.create_user(
+            username='simple_user_2',
+            password='simple_user_2',
+        )
+        cls.simple_user_2.is_staff = True
+        cls.simple_user_2.save()
 
         # Get the view permission for this model
         cls.permission_testmodel1 = Permission.objects.get(
             name='Can view testmodel1')
+        cls.permission_testmodel4 = Permission.objects.get(
+            name='Can view testmodel4')
         cls.permission_testmodel5 = Permission.objects.get(
             name='Can view testmodel5')
         # Create one object
@@ -77,6 +85,7 @@ class AdminViewPermissionInlinesTestCase(AdminViewPermissionTestCase):
         self.inlinemodeladmin_testmodel6 = InlineModelAdmin2(TestModel1,
                                                             admin.site)
         self.simple_user.user_permissions.add(self.permission_testmodel1)
+        self.simple_user_2.user_permissions.add(self.permission_testmodel4)
 
 
 class AdminViewPermissionViewsTestCase(BaseTestCase):

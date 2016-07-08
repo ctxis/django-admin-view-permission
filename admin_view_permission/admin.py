@@ -35,82 +35,7 @@ class AdminViewPermissionChangeList(ChangeList):
             self.title = title % force_text(self.opts.verbose_name)
 
 
-class AdminViewPermissionInlineModelAdmin(admin.options.InlineModelAdmin):
-    def get_queryset(self, request):
-        """
-        Returns a QuerySet of all model instances that can be edited by the
-        admin site. This is used by changelist_view.
-        """
-        if self.has_parent_view_permission(request):
-            qs = self.model._default_manager.get_queryset()
-            # TODO: this should be handled by some parameter to the ChangeList.
-            ordering = self.get_ordering(request)
-            if ordering:
-                qs = qs.order_by(*ordering)
-            return qs
-        else:
-            return super(AdminViewPermissionInlineModelAdmin,
-                         self).get_queryset(request)
-
-    def get_fields(self, request, obj=None):
-        if self.has_parent_view_permission(request, obj):
-            fields = super(AdminViewPermissionInlineModelAdmin,
-                           self).get_fields(
-                request, obj)
-            readonly_fields = self.get_readonly_fields(request, obj)
-            return [i for i in fields if i in readonly_fields]
-        else:
-            return super(AdminViewPermissionInlineModelAdmin,
-                         self).get_fields(request, obj)
-
-    def get_readonly_fields(self, request, obj=None):
-        """
-        Return all fields as readonly for the view permission
-        """
-        if self.has_parent_view_permission(request, obj):
-            readonly_fields = list(
-                [field.name for field in self.opts.local_fields] +
-                [field.name for field in self.opts.local_many_to_many]
-            )
-
-            # Try to remove id if user have not specify fields and
-            # readonly fields
-            try:
-                readonly_fields.remove('id')
-            except ValueError:
-                pass
-
-            if self.fields:
-                # Set as readonly fields the specified fields
-                readonly_fields = self.fields
-
-            return tuple(readonly_fields)
-        else:
-            return super(AdminViewPermissionInlineModelAdmin,
-                         self).get_readonly_fields(request, obj)
-
-    def has_parent_view_permission(self, request, obj=None):
-        if getattr(self.parent_model, 'assigned_modeladmin', None):
-            parent_modeladmin = self.parent_model.assigned_modeladmin
-            return parent_modeladmin.has_view_permission(request, obj) \
-                   and not parent_modeladmin.has_change_permission(request,
-                                                                   obj, True)
-
-        return False
-
-
-class AdminViewPermissionModelAdmin(admin.ModelAdmin):
-    def __init__(self, model, admin_site):
-        super(AdminViewPermissionModelAdmin, self).__init__(model, admin_site)
-        # Contibute this class to the model
-        setattr(self.model, 'assigned_modeladmin', self)
-
-    def get_changelist(self, request, **kwargs):
-        """
-        Returns the ChangeList class for use on the changelist page.
-        """
-        return AdminViewPermissionChangeList
-
+class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
     def get_model_perms(self, request):
         """
         Returns a dict of all perms for this model. This dict has the keys
@@ -140,7 +65,7 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
         changelist_view views. Also, added an extra argument to determine
         whenever this function will return the original response
         """
-        change_permission = super(AdminViewPermissionModelAdmin,
+        change_permission = super(AdminViewPermissionBaseModelAdmin,
                                   self).has_change_permission(request, obj)
         if only_change:
             return change_permission
@@ -157,19 +82,20 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
         """
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
-            fields = super(AdminViewPermissionModelAdmin, self).get_fields(
+            fields = super(AdminViewPermissionBaseModelAdmin, self).get_fields(
                 request, obj)
             readonly_fields = self.get_readonly_fields(request, obj)
             new_fields = [i for i in fields if i in readonly_fields]
             return new_fields
         else:
-            return super(AdminViewPermissionModelAdmin, self).get_fields(
+            return super(AdminViewPermissionBaseModelAdmin, self).get_fields(
                 request, obj)
 
     def get_readonly_fields(self, request, obj=None):
         """
         Return all fields as readonly for the view permission
         """
+        #import pdb; pdb.set_trace()
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
             readonly_fields = list(
@@ -189,7 +115,7 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
 
             return tuple(readonly_fields)
         else:
-            return super(AdminViewPermissionModelAdmin,
+            return super(AdminViewPermissionBaseModelAdmin,
                          self).get_readonly_fields(request, obj)
 
     def get_actions(self, request):
@@ -200,24 +126,71 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
                 not self.has_change_permission(request, only_change=True):
             return None
         else:
-            return super(AdminViewPermissionModelAdmin, self).get_actions(
+            return super(AdminViewPermissionBaseModelAdmin, self).get_actions(
                 request)
+
+
+class AdminViewPermissionInlineModelAdmin(AdminViewPermissionBaseModelAdmin,
+                                          admin.options.InlineModelAdmin):
+    def get_queryset(self, request):
+        """
+        Returns a QuerySet of all model instances that can be edited by the
+        admin site. This is used by changelist_view.
+        """
+        if self.has_view_permission(request) and \
+                not self.has_change_permission(request, None, True):
+            return super(AdminViewPermissionInlineModelAdmin, self)\
+                .get_queryset(request)
+        else:
+            # TODO: Somehow super executes admin.options.InlineModelAdmin
+            # get_queryset and AdminViewPermissionBaseModelAdmin which is
+            # convinient
+            return super(AdminViewPermissionInlineModelAdmin, self)\
+                .get_queryset(request)
+
+    '''def has_parent_view_permission(self, request, obj=None):
+        if getattr(self.parent_model, 'assigned_modeladmin', None):
+            parent_modeladmin = self.parent_model.assigned_modeladmin
+            return parent_modeladmin.has_view_permission(request, obj) \
+                   and not parent_modeladmin.has_change_permission(request,
+                                                                   obj, True)
+
+        return False'''
+
+
+class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin, admin.ModelAdmin):
+    def __init__(self, model, admin_site):
+        super(AdminViewPermissionModelAdmin, self).__init__(model, admin_site)
+        # Contibute this class to the model
+        setattr(self.model, 'assigned_modeladmin', self)
+
+    def get_changelist(self, request, **kwargs):
+        """
+        Returns the ChangeList class for use on the changelist page.
+        """
+        return AdminViewPermissionChangeList
 
     def get_inline_instances(self, request, obj=None):
         inline_instances = []
         for inline_class in self.inlines:
-            if self.has_view_permission(request) and \
-                    not self.has_change_permission(request, only_change=True):
+            new_class = type(
+                str('DynamicAdminViewPermissionInlineModelAdmin'),
+                (inline_class, AdminViewPermissionInlineModelAdmin),
+                dict(inline_class.__dict__))
 
-                new_class = type(
-                    str('DynamicAdminViewPermissionInlineModelAdmin'),
-                    (inline_class, AdminViewPermissionInlineModelAdmin),
-                    dict(inline_class.__dict__))
-                new_class.can_delete = False
-                new_class.max_num = 0
-                inline = new_class(self.model, self.admin_site)
-            else:
-                inline = inline_class(self.model, self.admin_site)
+            inline = new_class(self.model, self.admin_site)
+            if request:
+                if not (inline.has_view_permission(request, obj) or
+                        inline.has_add_permission(request) or
+                        inline.has_change_permission(request, obj, True) or
+                        inline.has_delete_permission(request, obj)):
+                    continue
+                if inline.has_view_permission(request, obj) and \
+                        not inline.has_change_permission(request, obj, True):
+                    inline.can_delete = False
+                if not inline.has_add_permission(request):
+                    inline.max_num = 0
+
             inline_instances.append(inline)
 
         return inline_instances
@@ -240,8 +213,16 @@ class AdminViewPermissionModelAdmin(admin.ModelAdmin):
             extra_context = extra_context or {}
             extra_context['title'] = _('View %s') % force_text(
                 opts.verbose_name)
+
             extra_context['show_save'] = False
             extra_context['show_save_and_continue'] = False
+
+            inlines = self.get_inline_instances(request, obj)
+            for inline in inlines:
+                if inline.has_change_permission(request, obj, True):
+                    extra_context['show_save'] = True
+                    extra_context['show_save_and_continue'] = True
+                    break
 
         return super(AdminViewPermissionModelAdmin, self).change_view(request,
                                                                       object_id,
