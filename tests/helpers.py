@@ -16,33 +16,15 @@ class BaseTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super(BaseTestCase, cls).setUpClass()
-        # Create two users
-        cls.super_user = get_user_model().objects.create_superuser(
-            username='super_user',
-            email='',
-            password='super_user',
-        )
-        cls.simple_user = get_user_model().objects.create_user(
-            username='simple_user',
-            password='simple_user',
-        )
-        # Django 1.8 compatibility
-        cls.simple_user.is_staff = True
-        cls.simple_user.save()
-        cls.simple_user_2 = get_user_model().objects.create_user(
-            username='simple_user_2',
-            password='simple_user_2',
-        )
-        cls.simple_user_2.is_staff = True
-        cls.simple_user_2.save()
 
         # Get the view permission for this model
-        cls.permission_testmodel1 = Permission.objects.get(
+        cls.view_permission_testmodel1 = Permission.objects.get(
             name='Can view testmodel1')
-        cls.permission_testmodel4 = Permission.objects.get(
+        cls.view_permission_testmodel4 = Permission.objects.get(
             name='Can view testmodel4')
-        cls.permission_testmodel5 = Permission.objects.get(
+        cls.view_permission_testmodel5 = Permission.objects.get(
             name='Can view testmodel5')
+
         # Create one object
         cls.object_testmodel0 = TestModel0.objects.create(
             var1='Test',
@@ -63,6 +45,27 @@ class BaseTestCase(TestCase):
         cls.object_testmodel5.var4.add(cls.object_testmodel0)
 
 
+    def create_simple_user(self):
+        simple_user = get_user_model().objects.create_user(
+            username='simple_user',
+            password='simple_user',
+        )
+        # Django 1.8 compatibility
+        simple_user.is_staff = True
+        simple_user.save()
+
+        return simple_user
+
+    def create_super_user(self):
+        super_user = get_user_model().objects.create_superuser(
+            username='super_user',
+            email='',
+            password='super_user',
+        )
+
+        return super_user
+
+
 class AdminViewPermissionTestCase(BaseTestCase):
 
     def setUp(self):
@@ -71,8 +74,6 @@ class AdminViewPermissionTestCase(BaseTestCase):
         # assigned_modeladmin attr. In the other tests we have to change them)
         self.modeladmin_testmodel1 = ModelAdmin1(TestModel1, admin.site)
         self.modeladmin_testmodel5 = ModelAdmin1(TestModel5, admin.site)
-        self.simple_user.user_permissions.add(self.permission_testmodel1,
-                                               self.permission_testmodel5)
 
 
 class AdminViewPermissionInlinesTestCase(AdminViewPermissionTestCase):
@@ -84,16 +85,16 @@ class AdminViewPermissionInlinesTestCase(AdminViewPermissionTestCase):
                                                             admin.site)
         self.inlinemodeladmin_testmodel6 = InlineModelAdmin2(TestModel1,
                                                             admin.site)
-        self.simple_user.user_permissions.add(self.permission_testmodel1)
-        self.simple_user_2.user_permissions.add(self.permission_testmodel4)
 
 
 class AdminViewPermissionViewsTestCase(BaseTestCase):
 
     def setUp(self):
         self.client = Client()
-        self.simple_user.user_permissions.add(self.permission_testmodel1)
-        self.super_user.user_permissions.add(self.permission_testmodel1)
+        self.simple_user = self.create_simple_user()
+        self.super_user = self.create_super_user()
+        self.simple_user.user_permissions.add(self.view_permission_testmodel1)
+        self.super_user.user_permissions.add(self.view_permission_testmodel1)
 
     def tearDown(self):
         self.client.logout()

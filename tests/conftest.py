@@ -5,43 +5,17 @@ import pytest
 from django.core.urlresolvers import reverse
 
 
-"""
--- deprecated
 @pytest.fixture
-def fixture_add_request(request, rf):
+def django_request(request, rf):
 
-    def _get_request(cls, user):
-        request = rf.get(
-            reverse('admin:%s_%s_add' % ('test_app', 'testmodel1'))
+    def _django_request(cls, user):
+        fixture_request = rf.get(
+            reverse('admin:index')
         )
-        request.user = user
-        return request
+        fixture_request.user = user
 
-    request.cls.fixture_add_request = _get_request
-"""
+        return fixture_request
 
-@pytest.fixture
-def simple_request(request, rf):
-    fixture_request = rf.get(
-        reverse('admin:index')
-    )
-    fixture_request.user = request.cls.simple_user
-    request.cls.simple_request = fixture_request
+    request.cls.django_request = _django_request
 
 
-@pytest.fixture
-def simple_request_2(request, rf):
-    fixture_request = rf.get(
-        reverse('admin:index')
-    )
-    fixture_request.user = request.cls.simple_user_2
-    request.cls.simple_request_2 = fixture_request
-
-
-@pytest.fixture
-def super_request(request, rf):
-    fixture_request = rf.get(
-        reverse('admin:index')
-    )
-    fixture_request.user = request.cls.super_user
-    request.cls.super_request = fixture_request
