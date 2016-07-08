@@ -228,8 +228,63 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
         inlines = self.modeladmin_testmodel1.get_inline_instances(
             self.django_request(simple_user))
 
+        assert inlines == []
+
+    def test_get_inline_instances_simple_user_2(self):
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel4)
+        inlines = self.modeladmin_testmodel1.get_inline_instances(
+            self.django_request(simple_user))
+
+        assert len(inlines) == 1
+        assert inlines[0].can_delete == False
+        assert inlines[0].max_num == 0
+
+    def test_get_inline_instances_simple_user_3(self):
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel4)
+        simple_user.user_permissions.add(self.view_permission_testmodel6)
+        inlines = self.modeladmin_testmodel1.get_inline_instances(
+            self.django_request(simple_user))
+
+        assert len(inlines) == 2
         for inline in inlines:
-            assert isinstance(inline, AdminViewPermissionInlineModelAdmin)
+            assert inline.can_delete == False
+            assert inline.max_num == 0
+
+    def test_get_inline_instances_simple_user_4(self):
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel4)
+        simple_user.user_permissions.add(self.change_permission_testmodel4)
+        simple_user.user_permissions.add(self.view_permission_testmodel6)
+        simple_user.user_permissions.add(self.change_permission_testmodel6)
+        inlines = self.modeladmin_testmodel1.get_inline_instances(
+            self.django_request(simple_user))
+
+        assert len(inlines) == 2
+        for inline in inlines:
+            # Yes, but the delete checkbox doesn't appear hopefully
+            assert inline.can_delete == True
+            assert inline.max_num == 0
+
+    def test_get_inline_instances_simple_user_5(self):
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel4)
+        simple_user.user_permissions.add(self.add_permission_testmodel4)
+        simple_user.user_permissions.add(self.view_permission_testmodel6)
+        simple_user.user_permissions.add(self.add_permission_testmodel6)
+        inlines = self.modeladmin_testmodel1.get_inline_instances(
+            self.django_request(simple_user))
+
+        assert len(inlines) == 2
+        for inline in inlines:
+            assert inline.can_delete == False
+            # TODO: fix this, the user should show the forms
+            assert inline.max_num == None
 
     def test_get_inline_instances_super_user_1(self):
         super_user = self.create_super_user()
@@ -285,7 +340,7 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
 
 ## change_view
 
-    def test_change_view_simple_user(self):
+    def test_change_view_simple_user_1(self):
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         change_view = self.modeladmin_testmodel1.change_view(
@@ -294,6 +349,28 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
         assert change_view.context_data['title'] == 'View test model1'
         assert not change_view.context_data['show_save']
         assert not change_view.context_data['show_save_and_continue']
+
+    def test_change_view_simple_user_2(self):
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel4)
+        change_view = self.modeladmin_testmodel1.change_view(
+            self.django_request(simple_user), str(self.object_testmodel1.pk))
+
+        assert change_view.context_data['title'] == 'View test model1'
+        assert not change_view.context_data['show_save']
+        assert not change_view.context_data['show_save_and_continue']
+
+    def test_change_view_simple_user_3(self):
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel4)
+        change_view = self.modeladmin_testmodel1.change_view(
+            self.django_request(simple_user), str(self.object_testmodel1.pk))
+
+        assert change_view.context_data['title'] == 'View test model1'
+        assert change_view.context_data['show_save']
+        assert change_view.context_data['show_save_and_continue']
 
     def test_change_view_super_user(self):
         super_user = self.create_super_user()

@@ -16,14 +16,26 @@ class BaseTestCase(TestCase):
     @classmethod
     def setUpClass(cls):
         super(BaseTestCase, cls).setUpClass()
-
         # Get the view permission for this model
         cls.view_permission_testmodel1 = Permission.objects.get(
             name='Can view testmodel1')
+
+        cls.add_permission_testmodel4 = Permission.objects.get(
+            name='Can add test model4')
         cls.view_permission_testmodel4 = Permission.objects.get(
             name='Can view testmodel4')
+        cls.change_permission_testmodel4 = Permission.objects.get(
+            name='Can change test model4')
+
         cls.view_permission_testmodel5 = Permission.objects.get(
             name='Can view testmodel5')
+
+        cls.add_permission_testmodel6 = Permission.objects.get(
+            name='Can add test model6')
+        cls.view_permission_testmodel6 = Permission.objects.get(
+            name='Can view testmodel6')
+        cls.change_permission_testmodel6 = Permission.objects.get(
+            name='Can change test model6')
 
         # Create one object
         cls.object_testmodel0 = TestModel0.objects.create(

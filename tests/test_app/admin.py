@@ -20,6 +20,14 @@ class DefaultModelAdmin(admin.ModelAdmin):
 
 
 ## Modeladmin for testing
+class StackedModelAdmin1(admin.StackedInline):
+    model = TestModel4
+
+
+class TabularModelAdmin2(admin.TabularInline):
+    model = TestModel6
+
+
 class InlineModelAdmin1(view_admin.AdminViewPermissionInlineModelAdmin):
     model = TestModel4
 
@@ -30,8 +38,8 @@ class InlineModelAdmin2(view_admin.AdminViewPermissionInlineModelAdmin):
 
 class ModelAdmin1(view_admin.AdminViewPermissionModelAdmin):
     inlines = [
-        StackedModelAdmin,
-        TabularModelAdmin,
+        StackedModelAdmin1,
+        TabularModelAdmin2,
     ]
 
 

@@ -95,7 +95,6 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         """
         Return all fields as readonly for the view permission
         """
-        #import pdb; pdb.set_trace()
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
             readonly_fields = list(
@@ -190,7 +189,6 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin, admin.Mod
                     inline.can_delete = False
                 if not inline.has_add_permission(request):
                     inline.max_num = 0
-
             inline_instances.append(inline)
 
         return inline_instances
