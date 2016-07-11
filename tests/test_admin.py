@@ -19,9 +19,10 @@ from .test_app.models import TestModel1
 @pytest.mark.usefixtures("django_request")
 class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
-    ## readonly_fields
+## readonly_fields
 
     def test_get_readonly_fields_simple_user_1(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
@@ -30,6 +31,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
 
     def test_get_readonly_fields_simple_user_2(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
@@ -38,6 +40,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
 
     def test_get_readonly_fields_simple_user_3(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         self.modeladmin_testmodel1.fields = ['id']
@@ -48,6 +51,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert readonly_fields == ('id',)
 
     def test_get_readonly_fields_simple_user_4(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         self.modeladmin_testmodel1.fields = ['var1', 'var2']
@@ -57,6 +61,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert readonly_fields == ('var1', 'var2')
 
     def test_get_readonly_fields_simple_user_5(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         self.modeladmin_testmodel1.fields = ['var1', 'func']
@@ -66,12 +71,56 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert readonly_fields == ('var1', 'func')
 
     def test_get_readonly_fields_simple_user_6(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel5)
         readonly_fields = self.modeladmin_testmodel5.get_readonly_fields(
             self.django_request(simple_user))
 
         assert readonly_fields == ('var0', 'var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_simple_user_7(self):
+        # View and change permission (chnage permission is stronger)
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
+            self.django_request(simple_user))
+
+        assert readonly_fields == ()
+
+    def test_get_readonly_fields_simple_user_8(self):
+        # View and add permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
+            self.django_request(simple_user))
+
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_simple_user_9(self):
+        # View and delete permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
+            self.django_request(simple_user))
+
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_simple_user_10(self):
+        # All permissions (change permission is stronger)
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
+            self.django_request(simple_user))
+
+        assert readonly_fields == ()
+
 
     def test_get_readonly_fields_super_user_1(self):
         super_user = self.create_super_user()
@@ -122,6 +171,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 ## get_fields
 
     def test_get_fields_simple_user_1(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         fields = self.modeladmin_testmodel1.get_fields(
@@ -130,10 +180,11 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert fields == ['var1', 'var2', 'var3', 'var4']
 
     def test_get_fields_simple_user_2(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(simple_user))
+            self.django_request(simple_user), self.object_testmodel1)
 
         assert fields == ['var1', 'var2', 'var3', 'var4']
 
@@ -147,19 +198,62 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
     def test_get_fields_super_user_2(self):
         super_user = self.create_super_user()
         fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(super_user))
+            self.django_request(super_user), self.object_testmodel1)
 
         assert fields == ['var1', 'var2', 'var3', 'var4']
 
-    ## get_actions
+## get_actions
 
-    def test_get_actions_simple_user(self):
+    def test_get_actions_simple_user_1(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         actions = self.modeladmin_testmodel1.get_actions(
             self.django_request(simple_user))
 
         assert not actions
+
+    def test_get_actions_simple_user_2(self):
+        # View and add permissions
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        actions = self.modeladmin_testmodel1.get_actions(
+            self.django_request(simple_user))
+
+        assert not actions
+
+    def test_get_actions_simple_user_3(self):
+        # View and change permissions (chnage permission is stronger)
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        actions = self.modeladmin_testmodel1.get_actions(
+            self.django_request(simple_user))
+
+        assert len(actions) == 1
+
+    def test_get_actions_simple_user_4(self):
+        # View and delete permissions
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        actions = self.modeladmin_testmodel1.get_actions(
+            self.django_request(simple_user))
+
+        assert not actions
+
+    def test_get_actions_simple_user_5(self):
+        # All permissions
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        actions = self.modeladmin_testmodel1.get_actions(
+            self.django_request(simple_user))
+
+        assert len(actions) == 1
 
     def test_get_actions_super_user(self):
         super_user = self.create_super_user()
@@ -171,16 +265,52 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 ## has_view_permission
 
     def test_has_view_permission_simple_user_1(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         assert self.modeladmin_testmodel1.has_view_permission(
             self.django_request(simple_user))
 
     def test_has_view_permission_simple_user_2(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         assert self.modeladmin_testmodel1.has_view_permission(
             self.django_request(simple_user), self.object_testmodel1)
+
+    def test_has_view_permission_simple_user_3(self):
+        # View and add permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_view_permission(
+            self.django_request(simple_user))
+
+    def test_has_view_permission_simple_user_4(self):
+        # View and change permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_view_permission(
+            self.django_request(simple_user))
+
+    def test_has_view_permission_simple_user_5(self):
+        # View and delete permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_view_permission(
+            self.django_request(simple_user))
+
+    def test_has_view_permission_simple_user_6(self):
+        # All permissions
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_view_permission(
+            self.django_request(simple_user))
 
     def test_has_view_permission_super_user_1(self):
         super_user = self.create_super_user()
@@ -195,16 +325,100 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 ## has_change_permission
 
     def test_has_change_permission_simple_user_1(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         assert self.modeladmin_testmodel1.has_change_permission(
             self.django_request(simple_user))
 
     def test_has_change_permission_simple_user_2(self):
+        # View permission only
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         assert self.modeladmin_testmodel1.has_change_permission(
             self.django_request(simple_user), self.object_testmodel1)
+
+    def test_has_change_permission_simple_user_3(self):
+        # View and add permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user))
+
+    def test_has_change_permission_simple_user_4(self):
+        # View and change permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user))
+
+    def test_has_change_permission_simple_user_5(self):
+        # View and delete permission only
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user))
+
+    def test_has_change_permission_simple_user_6(self):
+        # All permissions
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user))
+
+    def test_has_change_permission_simple_user_7(self):
+        # Change permission only
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user), only_change=True)
+
+    def test_has_change_permission_simple_user_8(self):
+        # View and change permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user), only_change=True)
+
+    def test_has_change_permission_simple_user_9(self):
+        # Add and change permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user), only_change=True)
+
+    def test_has_change_permission_simple_user_10(self):
+        # Delete and change permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user), only_change=True)
+
+    def test_has_change_permission_simple_user_11(self):
+        # All permissions
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.delete_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        assert self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user), only_change=True)
+
+    def test_has_change_permission_simple_user_12(self):
+        # Add permission only
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        assert not self.modeladmin_testmodel1.has_change_permission(
+            self.django_request(simple_user), only_change=True)
 
     def test_has_change_permission_super_user_1(self):
         super_user = self.create_super_user()

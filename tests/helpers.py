@@ -19,6 +19,12 @@ class BaseTestCase(TestCase):
         # Get the view permission for this model
         cls.view_permission_testmodel1 = Permission.objects.get(
             name='Can view testmodel1')
+        cls.change_permission_testmodel1 = Permission.objects.get(
+            name='Can change test model1')
+        cls.add_permission_testmodel1 = Permission.objects.get(
+            name='Can add test model1')
+        cls.delete_permission_testmodel1 = Permission.objects.get(
+            name='Can delete test model1')
 
         cls.add_permission_testmodel4 = Permission.objects.get(
             name='Can add test model4')
