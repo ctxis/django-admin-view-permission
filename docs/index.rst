@@ -13,5 +13,6 @@ Contents:
 
    installation
    configuration
+   uninstallation
 
 

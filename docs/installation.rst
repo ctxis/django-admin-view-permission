@@ -24,8 +24,8 @@ Support
 * Django: 1.8, 1.9
 * Python: 2.7, 3.4, 3.5
 
-Prerequisites
--------------
+Setup
+-----
 
 Make sure that ``'django.contrib.admin'`` is set up properly and add
 ``'admin_view_permission'`` to your ``INSTALLED_APPS`` setting::
@@ -36,5 +36,7 @@ Make sure that ``'django.contrib.admin'`` is set up properly and add
         'django.contrib.admin',
         # ...
     ]
+
+Finally, run ``python manage.py migrate`` to create the view permissions.
 
 .. _pip: https://pip.pypa.io/

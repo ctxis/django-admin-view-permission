@@ -53,3 +53,16 @@ This app provides a setting::
 in which you can provide which models you want to be added the view permission.
 If you don't specify this setting then the view permission will be applied to
 all the models.
+
+Remove
+------
+
+1. Remove the ``admin_view_permission`` from your ``INSTALLED_APPS`` setting
+2. Delete the view permissions from the database::
+
+        from django.contrib.auth.models import Permission
+        permissions = Permission.objects.filter(codename__startswith='view')
+        permissions.delete()
+
+   It will be helpful to check if the queryset contains only the view
+   permissions and not anything else (for example: custom permission added)
