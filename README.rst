@@ -58,8 +58,8 @@ in which you can provide which models you want to be added the view permission.
 If you don't specify this setting then the view permission will be applied to
 all the models.
 
-Remove
-------
+Uninstall
+---------
 
 1. Remove the ``admin_view_permission`` from your ``INSTALLED_APPS`` setting
 2. Delete the view permissions from the database::
