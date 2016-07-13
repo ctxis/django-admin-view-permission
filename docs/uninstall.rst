@@ -1,5 +1,5 @@
-Uninstallation
-==============
+Uninstall
+=========
 
 To remove the application completely firstly remove the ``admin_view_permission``
 from your ``INSTALLED_APPS`` setting and then open a debug shell and execute

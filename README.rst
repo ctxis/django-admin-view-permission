@@ -25,6 +25,10 @@ Support
 * Django: 1.8, 1.9
 * Python: 2.7, 3.4, 3.5
 
+Documentation
+-------------
+For a full documentation you can visit: http://django-admin-view-permission.readthedocs.org/
+
 Setup
 -----
 
