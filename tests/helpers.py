@@ -8,7 +8,7 @@ from django.contrib import admin
 
 from .test_app.admin import ModelAdmin1, ModelAdmin2, InlineModelAdmin1, \
     InlineModelAdmin2
-from .test_app.models import TestModel0, TestModel1, TestModel5
+from .test_app.models import TestModel0, TestModel1, TestModel5, TestModel4
 
 
 class BaseTestCase(TestCase):
@@ -53,6 +53,12 @@ class BaseTestCase(TestCase):
             var1='Test',
             var2='Test',
             var3=5,
+        )
+        cls.object_testmodel4 = TestModel4.objects.create(
+            var1=cls.object_testmodel1,
+            var2='Test',
+            var4=5,
+            var5='non editable field content',
         )
         cls.object_testmodel5 = TestModel5.objects.create(
             var1='Test',
@@ -112,6 +118,7 @@ class AdminViewPermissionViewsTestCase(BaseTestCase):
         self.simple_user = self.create_simple_user()
         self.super_user = self.create_super_user()
         self.simple_user.user_permissions.add(self.view_permission_testmodel1)
+        self.simple_user.user_permissions.add(self.view_permission_testmodel4)
         self.super_user.user_permissions.add(self.view_permission_testmodel1)
 
     def tearDown(self):

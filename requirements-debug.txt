@@ -1,6 +1,7 @@
 -r requirements.txt
 
 # Unit-testing
+py>=1.4.29
 pytest-django
 pytest-xdist
 pytest-cov

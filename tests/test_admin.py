@@ -605,14 +605,14 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(simple_user))
 
-        assert readonly_fields == ()
+        assert readonly_fields == ('property_field',)
 
     def test_get_readonly_fields_simple_user_2(self):
         simple_user = self.create_simple_user()
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(simple_user), self.object_testmodel1)
 
-        assert readonly_fields == ()
+        assert readonly_fields == ('property_field',)
 
     def test_get_readonly_fields_simple_user_3(self):
         simple_user = self.create_simple_user()
@@ -620,7 +620,7 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(simple_user))
 
-        assert readonly_fields == ()
+        assert readonly_fields == ('property_field',)
 
     def test_get_readonly_fields_simple_user_4(self):
         simple_user = self.create_simple_user()
@@ -644,7 +644,7 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(simple_user))
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4', 'property_field')
 
     def test_get_readonly_fields_simple_user_7(self):
         simple_user = self.create_simple_user()
@@ -652,7 +652,7 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(simple_user), self.object_testmodel1)
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4', 'property_field')
 
     def test_get_readonly_fields_simple_user_8(self):
         simple_user = self.create_simple_user()
@@ -678,14 +678,14 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(super_user))
 
-        assert readonly_fields == ()
+        assert readonly_fields == ('property_field',)
 
     def test_get_readonly_fields_super_user_2(self):
         super_user = self.create_super_user()
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(super_user), self.object_testmodel1)
 
-        assert readonly_fields == ()
+        assert readonly_fields == ('property_field',)
 
     def test_get_readonly_fields_super_user_3(self):
         super_user = self.create_super_user()
@@ -693,7 +693,7 @@ class TestAdminViewPermissionInlineModelAdmin(
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
             self.django_request(super_user))
 
-        assert readonly_fields == ()
+        assert readonly_fields == ('property_field',)
 
     def test_get_readonly_fields_super_user_4(self):
         super_user = self.create_super_user()
@@ -713,13 +713,31 @@ class TestAdminViewPermissionInlineModelAdmin(
 
 ## get_fields
 
+    def test_get_fields_simple_user_editable_false_field_in_fields(self):
+        simple_user = self.create_simple_user()
+        self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2', 'var3', 'var4', 'var5']
+        simple_user.user_permissions.add(self.view_permission_testmodel4)
+        fields = self.inlinemodeladmin_testmodel4.get_fields(
+            self.django_request(simple_user))
+
+        assert fields == ['var1', 'var2', 'var3', 'var4', 'var5']
+
+    def test_get_fields_simple_user_property_field_in_fields(self):
+        simple_user = self.create_simple_user()
+        self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2', 'var3', 'var4', 'property_field']
+        simple_user.user_permissions.add(self.view_permission_testmodel4)
+        fields = self.inlinemodeladmin_testmodel4.get_fields(
+            self.django_request(simple_user))
+
+        assert fields == ['var1', 'var2', 'var3', 'var4', 'property_field']
+
     def test_get_fields_simple_user_1(self):
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel4)
         fields = self.inlinemodeladmin_testmodel4.get_fields(
             self.django_request(simple_user))
 
-        assert fields == ['var1', 'var2', 'var3', 'var4']
+        assert fields == ['var1', 'var2', 'var3', 'var4', 'property_field']
 
     def test_get_fields_simple_user_2(self):
         simple_user = self.create_simple_user()
@@ -727,21 +745,21 @@ class TestAdminViewPermissionInlineModelAdmin(
         fields = self.inlinemodeladmin_testmodel4.get_fields(
             self.django_request(simple_user))
 
-        assert fields == ['var1', 'var2', 'var3', 'var4']
+        assert fields == ['var1', 'var2', 'var3', 'var4', 'property_field']
 
     def test_get_fields_super_user_1(self):
         super_user = self.create_super_user()
         fields = self.inlinemodeladmin_testmodel4.get_fields(
             self.django_request(super_user))
 
-        assert fields == ['var1', 'var2', 'var3', 'var4']
+        assert fields == ['var1', 'var2', 'var3', 'var4', 'property_field']
 
     def test_get_fields_super_user_2(self):
         super_user = self.create_super_user()
         fields = self.inlinemodeladmin_testmodel4.get_fields(
             self.django_request(super_user))
 
-        assert fields == ['var1', 'var2', 'var3', 'var4']
+        assert fields == ['var1', 'var2', 'var3', 'var4', 'property_field']
 
 
 class TestAdminViewPermissionAdminSite(SimpleTestCase):

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="en-us">
+<head>
+    <title>View test model1 | Django site admin</title>
+    <link rel="stylesheet" type="text/css" href="/static/admin/css/base.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/admin/css/forms.css"/>
+
+
+    <script type="text/javascript" src="/admin/jsi18n/"></script>
+    <script type="text/javascript" src="/static/admin/js/core.js"></script>
+    <script type="text/javascript" src="/static/admin/js/vendor/jquery/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/admin/js/jquery.init.js"></script>
+    <script type="text/javascript" src="/static/admin/js/admin/RelatedObjectLookups.js"></script>
+    <script type="text/javascript" src="/static/admin/js/actions.min.js"></script>
+    <script type="text/javascript" src="/static/admin/js/urlify.js"></script>
+    <script type="text/javascript" src="/static/admin/js/prepopulate.min.js"></script>
+    <script type="text/javascript" src="/static/admin/js/vendor/xregexp/xregexp.min.js"></script>
+
+    <meta name="robots" content="NONE,NOARCHIVE"/>
+</head>
+
+
+<body class=" app-test_app model-testmodel1 change-form"
+      data-admin-utc-offset="0">
+
+<!-- Container -->
+<div id="container">
+
+
+    <!-- Header -->
+    <div id="header">
+        <div id="branding">
+
+            <h1 id="site-name"><a href="/admin/">Django administration</a></h1>
+
+        </div>
+
+
+        <div id="user-tools">
+
+            Welcome,
+            <strong>simple_user</strong>.
+
+
+            <a href="/">View site</a> /
+
+
+            <a href="/admin/password_change/">Change password</a> /
+
+            <a href="/admin/logout/">Log out</a>
+
+        </div>
+
+
+    </div>
+    <!-- END Header -->
+
+    <div class="breadcrumbs">
+        <a href="/admin/">Home</a>
+        &rsaquo; <a href="/admin/test_app/">Test_App</a>
+        &rsaquo; <a href="/admin/test_app/testmodel1/">Test model1s</a>
+        &rsaquo; TestModel1 object
+    </div>
+
+
+    <!-- Content -->
+    <div id="content" class="colM">
+
+        <h1>View test model1</h1>
+        <div id="content-main">
+
+
+            <ul class="object-tools">
+
+                <li>
+
+                    <a href="/admin/test_app/testmodel1/1/history/" class="historylink">History</a>
+                </li>
+
+
+            </ul>
+
+
+            <form enctype="multipart/form-data" action="" method="post" id="testmodel1_form" novalidate><input
+                    type='hidden' name='csrfmiddlewaretoken' value='ALStEtMBlcul5imqxyvABAd4t4Njkloz'/>
+                <div>
+
+
+                    <fieldset class="module aligned ">
+
+
+                        <div class="form-row field-var1">
+
+
+                            <div>
+
+
+                                <label>Var1:</label>
+
+                                <p>Test</p>
+
+
+                            </div>
+
+                        </div>
+
+                        <div class="form-row field-var2">
+
+
+                            <div>
+
+
+                                <label>Var2:</label>
+
+                                <p>Test</p>
+
+
+                            </div>
+
+                        </div>
+
+                        <div class="form-row field-var3">
+
+
+                            <div>
+
+
+                                <label>Var3:</label>
+
+                                <p>5</p>
+
+
+                            </div>
+
+                        </div>
+
+                        <div class="form-row field-var4">
+
+
+                            <div>
+
+
+                                <label>Var4:</label>
+
+                                <p>TestModel0 object</p>
+
+
+                            </div>
+
+                        </div>
+
+                    </fieldset>
+
+
+                    <div class="submit-row">
+
+
+                    </div>
+
+
+                    <script type="text/javascript">
+                        (function ($) {
+                            $(document).ready(function () {
+                                $('.add-another').click(function (e) {
+                                    e.preventDefault();
+                                    var event = $.Event('django:add-another-related');
+                                    $(this).trigger(event);
+                                    if (!event.isDefaultPrevented()) {
+                                        showAddAnotherPopup(this);
+                                    }
+                                });
+
+
+                            });
+                        })(django.jQuery);
+                    </script>
+
+
+                    <script type="text/javascript">
+                        (function ($) {
+                            var field;
+
+
+                        })(django.jQuery);
+                    </script>
+
+
+                </div>
+            </form>
+        </div>
+
+
+        <br class="clear"/>
+    </div>
+    <!-- END Content -->
+
+    <div id="footer"></div>
+</div>
+<!-- END Container -->
+
+</body>
+</html>
