@@ -30,17 +30,8 @@ class TabularModelAdmin2(admin.TabularInline):
     model = TestModel6
 
 
-class BaseModelAdmin4Mixin(object):
-    fields = ['var1', 'var2', 'var3', 'var4', 'property_field']
-    readonly_fields = ['property_field']
-
-
-class InlineModelAdmin1(BaseModelAdmin4Mixin, view_admin.AdminViewPermissionInlineModelAdmin):
+class InlineModelAdmin1(view_admin.AdminViewPermissionInlineModelAdmin):
     model = TestModel4
-
-
-class ModelAdmin4(BaseModelAdmin4Mixin, admin.ModelAdmin):
-    pass
 
 
 class InlineModelAdmin2(view_admin.AdminViewPermissionInlineModelAdmin):
@@ -62,4 +53,3 @@ class ModelAdmin2(view_admin.AdminViewPermissionModelAdmin):
 
 
 admin.site.register(TestModel1, DefaultModelAdmin)
-admin.site.register(TestModel4, ModelAdmin4)

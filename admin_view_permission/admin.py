@@ -95,16 +95,17 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         """
         Return all fields as readonly for the view permission
         """
-        # get read_only fields specified on the admin class is available (needed for @property fields)
+        # get read_only fields specified on the admin class is available
+        # (needed for @property fields)
         readonly_fields = super(AdminViewPermissionBaseModelAdmin,
                                 self).get_readonly_fields(request, obj)
 
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
 
-            readonly_fields = list(self.readonly_fields) + [
-                field.name for field in self.opts.local_fields if field.editable] + [
-                field.name for field in self.opts.local_many_to_many if field.editable]
+            readonly_fields = list(readonly_fields) + \
+                [ field.name for field in self.opts.local_fields if field.editable ] + \
+                [ field.name for field in self.opts.local_many_to_many if field.editable ]
 
             # Try to remove id if user have not specify fields and
             # readonly fields

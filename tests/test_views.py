@@ -17,7 +17,7 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
         assert len(response.context['app_list']) == 1
         assert response.context['app_list'][0]['app_label'] == 'test_app'
-        assert len(response.context['app_list'][0]['models']) == 2
+        assert len(response.context['app_list'][0]['models']) == 1
         assert response.context['app_list'][0]['models'][0]['object_name'] == 'TestModel1'
 
     def test_index_view_super_user(self):
@@ -75,16 +75,6 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
         )
 
         assert response.status_code == 200
-
-    def test_change_view_property_field_shown(self):
-        self.client.login(username='simple_user', password='simple_user')
-
-        response = self.client.get(
-            reverse('admin:%s_%s_change' % ('test_app', 'testmodel4'),
-                    args=(self.object_testmodel4.pk,))
-        )
-        assert response.status_code == 200
-        assert b'property field value' in response.content
 
     def test_change_view_simple_user_unauthorized_post(self):
         self.client.login(username='simple_user', password='simple_user')
