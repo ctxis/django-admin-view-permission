@@ -249,7 +249,7 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
                 if django_version() == DjangoVersion.DJANGO_18:
                     model_name = '%s.%s' %(model._meta.app_label,
                                            model._meta.object_name)
-                elif django_version() == DjangoVersion.DJANGO_19:
+                elif django_version() > DjangoVersion.DJANGO_18:
                     model_name = model._meta.label
 
                 if model_name in SETTINGS_MODELS:

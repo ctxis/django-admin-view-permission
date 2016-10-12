@@ -10,3 +10,5 @@ def django_version():
         return DjangoVersion.DJANGO_19
     elif django.get_version().startswith('1.8'):
         return DjangoVersion.DJANGO_18
+    elif django.get_version().startswith('1.10'):
+        return DjangoVersion.DJANGO_110
