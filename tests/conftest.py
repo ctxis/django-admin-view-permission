@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import pytest
-
 from django.core.urlresolvers import reverse
 
 
@@ -17,5 +16,3 @@ def django_request(request, rf):
         return fixture_request
 
     request.cls.django_request = _django_request
-
-

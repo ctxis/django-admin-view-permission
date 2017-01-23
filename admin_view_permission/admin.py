@@ -2,19 +2,18 @@ from __future__ import unicode_literals
 
 from django.apps import apps
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin
-from django.utils.text import capfirst
-from django.utils.encoding import force_text
-from django.contrib.auth import get_permission_codename
-from django.contrib.admin.utils import unquote, quote
-from django.core.urlresolvers import NoReverseMatch, reverse
-from django.core.exceptions import PermissionDenied
+from django.contrib.admin.utils import unquote
 from django.contrib.admin.views.main import ChangeList
+from django.contrib.auth import get_permission_codename
+from django.core.exceptions import PermissionDenied
+from django.core.urlresolvers import NoReverseMatch, reverse
+from django.utils.encoding import force_text
+from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 
-from .utils import django_version
 from .enums import DjangoVersion
+from .utils import django_version
 
 
 class AdminViewPermissionChangeList(ChangeList):
@@ -100,12 +99,16 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         readonly_fields = super(AdminViewPermissionBaseModelAdmin,
                                 self).get_readonly_fields(request, obj)
 
-        if self.has_view_permission(request, obj) and \
-                not self.has_change_permission(request, obj, True):
+        if (self.has_view_permission(request, obj) and
+                not self.has_change_permission(request, obj, True)):
 
-            readonly_fields = list(readonly_fields) + \
-                [ field.name for field in self.opts.local_fields if field.editable ] + \
-                [ field.name for field in self.opts.local_many_to_many if field.editable ]
+            readonly_fields = (
+                list(readonly_fields) +
+                [field.name for field in self.opts.local_fields
+                 if field.editable] +
+                [field.name for field in self.opts.local_many_to_many
+                 if field.editable]
+            )
 
             # Try to remove id if user have not specify fields and
             # readonly fields
@@ -160,7 +163,8 @@ class AdminViewPermissionInlineModelAdmin(AdminViewPermissionBaseModelAdmin,
         return False'''
 
 
-class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin, admin.ModelAdmin):
+class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
+                                    admin.ModelAdmin):
     def __init__(self, model, admin_site):
         super(AdminViewPermissionModelAdmin, self).__init__(model, admin_site)
         # Contibute this class to the model
@@ -225,19 +229,18 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin, admin.Mod
                     extra_context['show_save_and_continue'] = True
                     break
 
-        return super(AdminViewPermissionModelAdmin, self).change_view(request,
-                                                                      object_id,
-                                                                      form_url,
-                                                                      extra_context)
+        return super(AdminViewPermissionModelAdmin, self).change_view(
+            request, object_id, form_url, extra_context)
 
 
 class AdminViewPermissionAdminSite(admin.AdminSite):
     def register(self, model_or_iterable, admin_class=None, **options):
         """
-        Create a new ModelAdmin class which inherits from the original and the above and register
-        all models with that
+        Create a new ModelAdmin class which inherits from the original and
+        the above and register all models with that
         """
-        SETTINGS_MODELS = getattr(settings, 'ADMIN_VIEW_PERMISSION_MODELS', None)
+        SETTINGS_MODELS = getattr(settings, 'ADMIN_VIEW_PERMISSION_MODELS',
+                                  None)
 
         models = model_or_iterable
         if not isinstance(model_or_iterable, tuple):
@@ -247,8 +250,8 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
                 SETTINGS_MODELS) == 0):
             for model in models:
                 if django_version() == DjangoVersion.DJANGO_18:
-                    model_name = '%s.%s' %(model._meta.app_label,
-                                           model._meta.object_name)
+                    model_name = '%s.%s' % (model._meta.app_label,
+                                            model._meta.object_name)
                 elif django_version() > DjangoVersion.DJANGO_18:
                     model_name = model._meta.label
 
@@ -289,7 +292,7 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
             models = {
                 m: m_a for m, m_a in self._registry.items()
                 if m._meta.app_label == label
-                }
+            }
         else:
             models = self._registry
 

@@ -1,13 +1,16 @@
 from __future__ import unicode_literals
 
-import django
-from django.test import TestCase, Client
-from django.contrib.auth.models import Permission
-from django.contrib.auth import get_user_model
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.test import Client, TestCase
 
-from .test_app.admin import ModelAdmin1, ModelAdmin2, InlineModelAdmin1, \
-    InlineModelAdmin2
+from .test_app.admin import (
+    InlineModelAdmin1,
+    InlineModelAdmin2,
+    ModelAdmin1,
+    ModelAdmin2,
+)
 from .test_app.models import TestModel0, TestModel1, TestModel5
 
 
@@ -99,8 +102,10 @@ class AdminViewPermissionInlinesTestCase(AdminViewPermissionTestCase):
     def setUp(self):
         # Refresh assigned_modeladmin attribute
         self.modeladmin_testmodel2 = ModelAdmin2(TestModel1, admin.site)
-        self.inlinemodeladmin_testmodel4 = InlineModelAdmin1(TestModel1, admin.site)
-        self.inlinemodeladmin_testmodel6 = InlineModelAdmin2(TestModel1, admin.site)
+        self.inlinemodeladmin_testmodel4 = InlineModelAdmin1(
+            TestModel1, admin.site)
+        self.inlinemodeladmin_testmodel6 = InlineModelAdmin2(
+            TestModel1, admin.site)
 
 
 class AdminViewPermissionViewsTestCase(BaseTestCase):
@@ -114,4 +119,3 @@ class AdminViewPermissionViewsTestCase(BaseTestCase):
 
     def tearDown(self):
         self.client.logout()
-

@@ -1,26 +1,27 @@
 from __future__ import unicode_literals
 
 import pytest
-
-from django.test import SimpleTestCase
-from django.test import override_settings
-from django.core.exceptions import FieldError
 from django.contrib import admin
+from django.core.exceptions import FieldError
+from django.test import SimpleTestCase, override_settings
 
-from admin_view_permission.admin import AdminViewPermissionInlineModelAdmin
-from admin_view_permission.admin import AdminViewPermissionModelAdmin
-from admin_view_permission.admin import AdminViewPermissionAdminSite
+from admin_view_permission.admin import (
+    AdminViewPermissionAdminSite,
+    AdminViewPermissionInlineModelAdmin,
+    AdminViewPermissionModelAdmin,
+)
 
-from .helpers import AdminViewPermissionTestCase
-from .helpers import AdminViewPermissionInlinesTestCase
-
+from .helpers import (
+    AdminViewPermissionInlinesTestCase,
+    AdminViewPermissionTestCase,
+)
 from .test_app.models import TestModel1
 
 
 @pytest.mark.usefixtures("django_request")
 class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
-## readonly_fields
+    # readonly_fields
 
     def test_get_readonly_fields_simple_user_1(self):
         # View permission only
@@ -52,17 +53,20 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert readonly_fields == ('id',)
 
     def test_get_readonly_fields_simple_user_4(self):
-        # View permission only, var5 is a non-editable field and var6 is a propery field.
-        # Get_readonly_fields will return this field but the change_view will raise
-        # FieldError on change_permission. This is normal because the default
-        # modeladmin requires those field to be on the readonly_fields option
+        # View permission only, var5 is a non-editable field and var6 is a
+        # propery field. Get_readonly_fields will return this field but the
+        # change_view will raise FieldError on change_permission. This is
+        # normal because the default modeladmin requires those field to be on
+        # the readonly_fields option
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
+                                             'var5', 'var6']
         readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
             self.django_request(simple_user))
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4', 'var5', 'var6')
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4', 'var5',
+                                   'var6')
 
     def test_get_readonly_fields_simple_user_5(self):
         # View permission only
@@ -150,7 +154,8 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
     def test_get_readonly_fields_super_user_4(self):
         super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
+                                             'var5', 'var6']
         readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
             self.django_request(super_user))
 
@@ -171,7 +176,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
         assert readonly_fields == ()
 
-## get_fields
+    # get_fields
 
     def test_get_fields_simple_user_1(self):
         # View permission only
@@ -205,7 +210,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
         assert fields == ['var1', 'var2', 'var3', 'var4']
 
-## get_actions
+    # get_actions
 
     def test_get_actions_simple_user_1(self):
         # View permission only
@@ -265,7 +270,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
         assert len(actions) == 1
 
-## has_view_permission
+    # has_view_permission
 
     def test_has_view_permission_simple_user_1(self):
         # View permission only
@@ -325,7 +330,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         assert self.modeladmin_testmodel1.has_view_permission(
             self.django_request(super_user), self.object_testmodel1)
 
-## has_change_permission
+    # has_change_permission
 
     def test_has_change_permission_simple_user_1(self):
         # View permission only
@@ -437,7 +442,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 @pytest.mark.usefixtures("django_request")
 class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
 
-## get_inline_instances
+    # get_inline_instances
 
     def test_get_inline_instances_simple_user_1(self):
         simple_user = self.create_simple_user()
@@ -455,7 +460,7 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
             self.django_request(simple_user))
 
         assert len(inlines) == 1
-        assert inlines[0].can_delete == False
+        assert inlines[0].can_delete is False
         assert inlines[0].max_num == 0
 
     def test_get_inline_instances_simple_user_3(self):
@@ -468,7 +473,7 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
 
         assert len(inlines) == 2
         for inline in inlines:
-            assert inline.can_delete == False
+            assert inline.can_delete is False
             assert inline.max_num == 0
 
     def test_get_inline_instances_simple_user_4(self):
@@ -484,7 +489,7 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
         assert len(inlines) == 2
         for inline in inlines:
             # Yes, but the delete checkbox doesn't appear hopefully
-            assert inline.can_delete == True
+            assert inline.can_delete is True
             assert inline.max_num == 0
 
     def test_get_inline_instances_simple_user_5(self):
@@ -499,9 +504,9 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
 
         assert len(inlines) == 2
         for inline in inlines:
-            assert inline.can_delete == False
+            assert inline.can_delete is False
             # TODO: fix this, the user should show the forms
-            assert inline.max_num == None
+            assert inline.max_num is None
 
     def test_get_inline_instances_super_user_1(self):
         super_user = self.create_super_user()
@@ -511,51 +516,51 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
         for inline in inlines:
             assert isinstance(inline, AdminViewPermissionInlineModelAdmin)
 
-## get_model_perms
+    # get_model_perms
 
     def test_get_model_perms_simple_user_1(self):
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         assert self.modeladmin_testmodel1.get_model_perms(
             self.django_request(simple_user)) == {
-                   'add': False,
-                   'change': True,
-                   'delete': False,
-                   'view': True
-               }
+            'add': False,
+            'change': True,
+            'delete': False,
+            'view': True
+        }
 
     def test_get_model_perms_simple_user_2(self):
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         assert self.modeladmin_testmodel1.get_model_perms(
             self.django_request(simple_user)) == {
-                   'add': False,
-                   'change': True,
-                   'delete': False,
-                   'view': True
-               }
+            'add': False,
+            'change': True,
+            'delete': False,
+            'view': True
+        }
 
     def test_get_model_perms_super_user_1(self):
         super_user = self.create_super_user()
         assert self.modeladmin_testmodel1.get_model_perms(
             self.django_request(super_user)) == {
-                   'add': True,
-                   'change': True,
-                   'delete': True,
-                   'view': True
-               }
+            'add': True,
+            'change': True,
+            'delete': True,
+            'view': True
+        }
 
     def test_get_model_perms_super_user_2(self):
         super_user = self.create_super_user()
         assert self.modeladmin_testmodel1.get_model_perms(
             self.django_request(super_user)) == {
-                   'add': True,
-                   'change': True,
-                   'delete': True,
-                   'view': True
-               }
+            'add': True,
+            'change': True,
+            'delete': True,
+            'view': True
+        }
 
-## change_view
+    # change_view
 
     def test_change_view_simple_user_1(self):
         simple_user = self.create_simple_user()
@@ -571,7 +576,8 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
     def test_change_view_simple_user_2(self):
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
+                                             'var5', 'var6']
         change_view = self.modeladmin_testmodel1.change_view(
             self.django_request(simple_user), str(self.object_testmodel1.pk))
 
@@ -612,14 +618,18 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
 
     def test_change_view_super_user_2(self):
         super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
+                                             'var5', 'var6']
         with pytest.raises(FieldError):
             self.modeladmin_testmodel1.change_view(
-                self.django_request(super_user), str(self.object_testmodel1.pk))
+                self.django_request(super_user),
+                str(self.object_testmodel1.pk)
+            )
 
     def test_change_view_super_user_3(self):
         super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
+                                             'var5', 'var6']
         self.modeladmin_testmodel1.readonly_fields = ['var5', 'var6']
         change_view = self.modeladmin_testmodel1.change_view(
             self.django_request(super_user), str(self.object_testmodel1.pk))
@@ -630,9 +640,9 @@ class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
 
 @pytest.mark.usefixtures("django_request")
 class TestAdminViewPermissionInlineModelAdmin(
-    AdminViewPermissionInlinesTestCase):
+    AdminViewPermissionInlinesTestCase):  # noqa: E125
 
-## readonly_fields
+    # readonly_fields
 
     def test_get_readonly_fields_simple_user_1(self):
         simple_user = self.create_simple_user()
@@ -745,7 +755,7 @@ class TestAdminViewPermissionInlineModelAdmin(
 
         assert readonly_fields == ()
 
-## get_fields
+    # get_fields
 
     def test_get_fields_simple_user_1(self):
         simple_user = self.create_simple_user()
@@ -814,11 +824,10 @@ class TestAdminViewPermissionAdminSite(SimpleTestCase):
     def test_register_5(self):
         self.admin_site.register(TestModel1)
         assert not isinstance(self.admin_site._registry[TestModel1],
-                          AdminViewPermissionModelAdmin)
+                              AdminViewPermissionModelAdmin)
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=())
     def test_register_6(self):
         self.admin_site.register(TestModel1)
         assert not isinstance(self.admin_site._registry[TestModel1],
-                          AdminViewPermissionModelAdmin)
-
+                              AdminViewPermissionModelAdmin)

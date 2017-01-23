@@ -1,11 +1,13 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
+
 from admin_view_permission import admin as view_admin
-from .models import *
+
+from .models import *  # noqa: F403
 
 
-## Modeladmin for the UI
+# Modeladmin for the UI
 class StackedModelAdmin(admin.StackedInline):
     model = TestModel2
 
@@ -21,7 +23,7 @@ class DefaultModelAdmin(admin.ModelAdmin):
     ]
 
 
-## Modeladmin for testing
+# Modeladmin for testing
 class StackedModelAdmin1(admin.StackedInline):
     model = TestModel4
 

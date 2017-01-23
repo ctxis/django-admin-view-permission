@@ -3,13 +3,12 @@ from __future__ import unicode_literals
 from django.core.urlresolvers import reverse
 
 from .helpers import AdminViewPermissionViewsTestCase
-
 from .test_app.models import TestModel1
 
 
 class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
-## admin index
+    # admin index
 
     def test_index_view_simple_user(self):
         self.client.login(username='simple_user', password='simple_user')
@@ -18,7 +17,8 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
         assert len(response.context['app_list']) == 1
         assert response.context['app_list'][0]['app_label'] == 'test_app'
         assert len(response.context['app_list'][0]['models']) == 1
-        assert response.context['app_list'][0]['models'][0]['object_name'] == 'TestModel1'
+        assert (response.context['app_list'][0]['models'][0]['object_name'] ==
+                'TestModel1')
 
     def test_index_view_super_user(self):
         self.client.login(username='super_user', password='super_user')
@@ -26,7 +26,7 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
         assert len(response.context['app_list']) == 2
 
-## changeview
+    # changeview
 
     def test_changeview_view_simple_user(self):
         self.client.login(username='simple_user', password='simple_user')
@@ -36,7 +36,7 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
         assert response.status_code == 200
 
-## history
+    # history
 
     def test_history_view_simple_user(self):
         self.client.login(username='simple_user', password='simple_user')
@@ -47,7 +47,7 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
         assert response.status_code == 200
 
-## add
+    # add
 
     def test_add_view_simple_user(self):
         self.client.login(username='simple_user', password='simple_user')
@@ -65,7 +65,7 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
         assert response.status_code == 200
 
-## change
+    # change
 
     def test_change_view_simple_user(self):
         self.client.login(username='simple_user', password='simple_user')
@@ -109,7 +109,7 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
         assert response.status_code == 200
 
-## delete
+    # delete
 
     def test_delete_view_simple_user(self):
         self.client.login(username='simple_user', password='simple_user')
@@ -140,4 +140,3 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
         )
 
         assert response.status_code == 200
-

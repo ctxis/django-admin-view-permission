@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
 
-from django.test import TestCase, override_settings
-from django.contrib.admin.apps import AdminConfig
 from django.apps import apps
 from django.db import models
 from django.db.models.signals import post_migrate
+from django.test import TestCase, override_settings
 
 
 class TestAdminViewPermissionConfig(TestCase):
@@ -44,7 +43,7 @@ class TestAdminViewPermissionConfig(TestCase):
     def test_ready_with_one_model(self):
         self.trigger_signal()
         self.assertEqual(self.model1._meta.permissions,
-                         [('view_apptestmodel1', 'Can view apptestmodel1'),])
+                         [('view_apptestmodel1', 'Can view apptestmodel1'), ])
         self.assertEqual(self.model2._meta.permissions, [])
 
     @override_settings(
@@ -69,9 +68,9 @@ class TestAdminViewPermissionConfig(TestCase):
     def test_ready_with_none(self):
         self.trigger_signal()
         self.assertEqual(self.model1._meta.permissions,
-                         [('view_apptestmodel1', 'Can view apptestmodel1'),])
+                         [('view_apptestmodel1', 'Can view apptestmodel1'), ])
         self.assertEqual(self.model2._meta.permissions,
-                         [('view_apptestmodel2', 'Can view apptestmodel2'),])
+                         [('view_apptestmodel2', 'Can view apptestmodel2'), ])
 
     @override_settings(
         ADMIN_VIEW_PERMISSION_MODELS=['test_app.AppTestModel3', ]
@@ -87,5 +86,7 @@ class TestAdminViewPermissionConfig(TestCase):
     )
     def test_ready_with_other_permissions_and_with_none(self):
         self.trigger_signal()
-        self.assertEqual(self.model3._meta.permissions,
-                         ((u'copy_apptestmodel3', u'Can copy apptestmodel3'), ))
+        self.assertEqual(
+            self.model3._meta.permissions,
+            ((u'copy_apptestmodel3', u'Can copy apptestmodel3'), )
+        )

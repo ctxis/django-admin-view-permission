@@ -1,5 +1,9 @@
 -r requirements.txt
 
+# Style tools
+flake8
+flake8-isort
+
 # Tools
 ipdb
 

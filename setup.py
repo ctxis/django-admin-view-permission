@@ -1,4 +1,5 @@
 import os
+
 from setuptools import setup
 
 with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
@@ -15,7 +16,7 @@ setup(
     license='BSD License',
     description='A simple Django app which adds view permissions.',
     long_description=README,
-    keywords = ['django', 'admin'],
+    keywords=['django', 'admin'],
     url='http://django-admin-view-permission.readthedocs.org/',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
