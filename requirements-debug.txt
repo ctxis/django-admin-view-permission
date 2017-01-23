@@ -1,5 +1,8 @@
 -r requirements.txt
 
+# Tools
+ipdb
+
 # Unit-testing
 py>=1.4.29
 pytest-django
