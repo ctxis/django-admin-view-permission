@@ -243,7 +243,7 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
                                   None)
 
         models = model_or_iterable
-        if not isinstance(model_or_iterable, tuple):
+        if not isinstance(model_or_iterable, (tuple, list)):
             models = tuple([model_or_iterable])
 
         if SETTINGS_MODELS or (SETTINGS_MODELS is not None and len(
@@ -264,7 +264,7 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
                     else:
                         admin_class = AdminViewPermissionModelAdmin
 
-                super(AdminViewPermissionAdminSite, self).register(model,
+                super(AdminViewPermissionAdminSite, self).register([model],
                                                                    admin_class,
                                                                    **options)
         else:
