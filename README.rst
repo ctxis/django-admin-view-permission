@@ -50,7 +50,7 @@ Configuration
 This app provides a setting::
 
     ADMIN_VIEW_PERMISSION_MODELS = [
-        auth.User,
+        'auth.User',
         ...
     ]
 
