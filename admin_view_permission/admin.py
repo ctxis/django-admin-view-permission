@@ -80,8 +80,8 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         which are in fields attr
         """
         if self.has_view_permission(request, obj) and \
-                ((obj and not self.has_change_permission(request, obj, True)) or \
-                (obj is None and not self.has_add_permission(request))):
+                (obj and not self.has_change_permission(request, obj, True)) \
+                or (obj is None and not self.has_add_permission(request)):
             fields = super(AdminViewPermissionBaseModelAdmin, self).get_fields(
                 request, obj)
             readonly_fields = self.get_readonly_fields(request, obj)
@@ -100,10 +100,9 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         readonly_fields = super(AdminViewPermissionBaseModelAdmin,
                                 self).get_readonly_fields(request, obj)
 
-        if (self.has_view_permission(request, obj) and
-                ((obj and not self.has_change_permission(request, obj, True)) or \
-                (obj is None and not self.has_add_permission(request)))):
-
+        if self.has_view_permission(request, obj) and \
+                (obj and not self.has_change_permission(request, obj, True)) \
+                or (obj is None and not self.has_add_permission(request)):
             readonly_fields = (
                 list(readonly_fields) +
                 [field.name for field in self.opts.local_fields
