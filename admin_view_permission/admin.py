@@ -11,9 +11,26 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
+from django.contrib.admin.templatetags.admin_modify import register, submit_row as original_submit_row
+
 
 from .enums import DjangoVersion
 from .utils import django_version
+
+
+@register.inclusion_tag('admin/submit_line.html', takes_context=True)
+def submit_row(context):
+    """submit buttons context change"""
+    ctx = original_submit_row(context)
+    ctx.update({
+        'show_save_and_add_another': context.get('show_save_and_add_another',
+                                                 ctx['show_save_and_add_another']),
+        'show_save_and_continue': context.get('show_save_and_continue',
+                                              ctx['show_save_and_continue']),
+        'show_save': context.get('show_save',
+                                 ctx['show_save'])
+    })
+    return ctx
 
 
 class AdminViewPermissionChangeList(ChangeList):
@@ -222,6 +239,7 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
 
             extra_context['show_save'] = False
             extra_context['show_save_and_continue'] = False
+            extra_context['show_save_and_add_another'] = False
 
             inlines = self.get_inline_instances(request, obj)
             for inline in inlines:
