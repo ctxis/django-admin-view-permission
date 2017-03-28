@@ -76,10 +76,10 @@ class BaseTestCase(TestCase):
             var3=5,
         )
         cls.object_testmodel6 = TestModel6.objects.create(
-            var1 = cls.object_testmodel1,
-            var2 = 'Text',
-            var3 = 'Text',
-            var4 = 5
+            var1=cls.object_testmodel1,
+            var2='Text',
+            var3='Text',
+            var4=5
         )
         cls.object_testmodel1.var4.add(cls.object_testmodel0)
         cls.object_testmodel5.var4.add(cls.object_testmodel0)
