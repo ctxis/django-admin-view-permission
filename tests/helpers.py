@@ -11,7 +11,13 @@ from .test_app.admin import (
     ModelAdmin1,
     ModelAdmin2,
 )
-from .test_app.models import TestModel0, TestModel1, TestModel5
+from .test_app.models import (
+    TestModel0,
+    TestModel1,
+    TestModel4,
+    TestModel5,
+    TestModel6,
+)
 
 
 class BaseTestCase(TestCase):
@@ -58,10 +64,22 @@ class BaseTestCase(TestCase):
             var3=5,
             var5='Test'
         )
+        cls.object_testmodel4 = TestModel4.objects.create(
+            var1=cls.object_testmodel1,
+            var2='Test',
+            var3='Test',
+            var4=5
+        )
         cls.object_testmodel5 = TestModel5.objects.create(
             var1='Test',
             var2='Test',
             var3=5,
+        )
+        cls.object_testmodel6 = TestModel6.objects.create(
+            var1 = cls.object_testmodel1,
+            var2 = 'Text',
+            var3 = 'Text',
+            var4 = 5
         )
         cls.object_testmodel1.var4.add(cls.object_testmodel0)
         cls.object_testmodel5.var4.add(cls.object_testmodel0)

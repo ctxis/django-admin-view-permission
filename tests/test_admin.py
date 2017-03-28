@@ -87,7 +87,7 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
         assert readonly_fields == ('var0', 'var1', 'var2', 'var3', 'var4')
 
-    def test_get_readonly_fields_simple_user_7(self):
+    def test_get_readonly_fields_simple_user_7_without_obj(self):
         # View and change permission (chnage permission is stronger)
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
@@ -95,15 +95,35 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
         readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
             self.django_request(simple_user))
 
+        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+
+    def test_get_readonly_fields_simple_user_7_with_obj(self):
+        # View and change permission (chnage permission is stronger)
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.change_permission_testmodel1)
+        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
+            self.django_request(simple_user), self.object_testmodel1)
+
         assert readonly_fields == ()
 
-    def test_get_readonly_fields_simple_user_8(self):
+    def test_get_readonly_fields_simple_user_8_without_obj(self):
         # View and add permission
         simple_user = self.create_simple_user()
         simple_user.user_permissions.add(self.view_permission_testmodel1)
         simple_user.user_permissions.add(self.add_permission_testmodel1)
         readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
             self.django_request(simple_user))
+
+        assert readonly_fields == ()
+
+    def test_get_readonly_fields_simple_user_8_with_obj(self):
+        # View and add permission
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        simple_user.user_permissions.add(self.add_permission_testmodel1)
+        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
+            self.django_request(simple_user), self.object_testmodel1)
 
         assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
 
@@ -647,7 +667,7 @@ class TestAdminViewPermissionInlineModelAdmin(
     def test_get_readonly_fields_simple_user_1(self):
         simple_user = self.create_simple_user()
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user))
+            self.django_request(simple_user), self.object_testmodel4)
 
         assert readonly_fields == ()
 
@@ -662,7 +682,7 @@ class TestAdminViewPermissionInlineModelAdmin(
         simple_user = self.create_simple_user()
         self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2']
         readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user))
+            self.django_request(simple_user), self.object_testmodel4)
 
         assert readonly_fields == ()
 
@@ -678,7 +698,7 @@ class TestAdminViewPermissionInlineModelAdmin(
     def test_get_readonly_fields_simple_user_5(self):
         simple_user = self.create_simple_user()
         readonly_fields = self.inlinemodeladmin_testmodel6.get_readonly_fields(
-            self.django_request(simple_user))
+            self.django_request(simple_user), self.object_testmodel6)
 
         assert readonly_fields == ()
 
