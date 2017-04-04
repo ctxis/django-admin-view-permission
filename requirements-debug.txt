@@ -10,6 +10,9 @@ pytest-django
 pytest-xdist
 pytest-cov
 coveralls
+parameterized
+model_mommy
+mock
 
 # Docs
 sphinx

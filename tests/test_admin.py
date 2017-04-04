@@ -1,9 +1,19 @@
 from __future__ import unicode_literals
 
+from collections import namedtuple
+
 import pytest
+from django import forms
 from django.contrib import admin
-from django.core.exceptions import FieldError
-from django.test import SimpleTestCase, override_settings
+from django.contrib.admin import AdminSite
+from django.test import (
+    RequestFactory,
+    SimpleTestCase,
+    TestCase,
+    override_settings,
+)
+from model_mommy import mommy
+from nose_parameterized import parameterized
 
 from admin_view_permission.admin import (
     AdminViewPermissionAdminSite,
@@ -12,856 +22,1563 @@ from admin_view_permission.admin import (
 )
 
 from .helpers import (
-    AdminViewPermissionInlinesTestCase,
-    AdminViewPermissionTestCase,
+    DataMixin,
+    create_simple_user,
+    create_super_user,
+    create_urlconf,
 )
-from .test_app.models import TestModel1
+from .test_app.admin import ModelAdmin1
+from .test_app.models import TestModel1, TestModel5
+
+try:
+    from django.urls import reverse
+except ImportError:
+    from django.core.urlresolvers import reverse
 
 
-@pytest.mark.usefixtures("django_request")
-class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
+class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
 
-    # readonly_fields
+    @classmethod
+    def setUpTestData(cls):
+        super(TestAdminViewPermissionBaseModelAdmin, cls).setUpTestData()
 
-    def test_get_readonly_fields_simple_user_1(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
+        # Users
+        cls.user_without_permissions = create_simple_user()
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+        cls.user_with_a_perm_on_model1 = create_simple_user()
+        cls.user_with_a_perm_on_model1.user_permissions.add(
+            cls.add_permission_model1)
 
-    def test_get_readonly_fields_simple_user_2(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel1)
+        cls.user_with_v_perm_on_model1 = create_simple_user()
+        cls.user_with_v_perm_on_model1.user_permissions.add(
+            cls.view_permission_model1)
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
+        cls.user_with_c_perm_on_model1 = create_simple_user()
+        cls.user_with_c_perm_on_model1.user_permissions.add(
+            cls.change_permission_model1)
 
-    def test_get_readonly_fields_simple_user_3(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.fields = ['id']
-        self.modeladmin_testmodel1.readonly_fields = ('id',)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
+        cls.user_with_d_perm_on_model1 = create_simple_user()
+        cls.user_with_d_perm_on_model1.user_permissions.add(
+            cls.delete_permission_model1)
 
-        assert readonly_fields == ('id',)
+        cls.user_with_av_perm_on_model1 = create_simple_user()
+        cls.user_with_av_perm_on_model1.user_permissions.add(
+            cls.add_permission_model1,
+            cls.view_permission_model1)
 
-    def test_get_readonly_fields_simple_user_4(self):
+        cls.user_with_cv_perm_on_model1 = create_simple_user()
+        cls.user_with_cv_perm_on_model1.user_permissions.add(
+            cls.change_permission_model1,
+            cls.view_permission_model1)
+
+        cls.user_with_dv_perm_on_model1 = create_simple_user()
+        cls.user_with_dv_perm_on_model1.user_permissions.add(
+            cls.delete_permission_model1,
+            cls.view_permission_model1)
+
+        cls.user_with_avc_perm_on_model1 = create_simple_user()
+        cls.user_with_avc_perm_on_model1.user_permissions.add(
+            cls.add_permission_model1,
+            cls.view_permission_model1,
+            cls.change_permission_model1)
+
+        cls.user_with_avcd_perm_on_model1 = create_simple_user()
+        cls.user_with_avcd_perm_on_model1.user_permissions.add(
+            cls.add_permission_model1,
+            cls.view_permission_model1,
+            cls.change_permission_model1,
+            cls.delete_permission_model1)
+
+        cls.user_with_v_perm_on_model5 = create_simple_user()
+        cls.user_with_v_perm_on_model5.user_permissions.add(
+            cls.view_permission_model5)
+
+        cls.super_user = create_super_user()
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAdminViewPermissionBaseModelAdmin, cls).setUpClass()
+        cls.factory = RequestFactory()
+
+    def setUp(self):
+        self.admin_site = AdminSite(name='test_admin')
+
+    RequestUser = namedtuple('RequestUser', 'user, view')
+
+    # Modeladmin
+
+    def _modeladmin_simple(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        return ModelAdmin1(TestModel1, self.admin_site)
+
+    def _modeladmin_with_id_on_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, self.admin_site)
+        modeladmin.fields = ['id']
+        modeladmin.readonly_fields = ('id', )
+
+        return modeladmin
+
+    def _modeladmin_with_property_on_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, self.admin_site)
+        modeladmin.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+
+        return modeladmin
+
+    def _modeladmin_with_exclude_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, ModelAdmin1)
+        modeladmin.exclude = ['var1']
+
+        return modeladmin
+
+    def _modeladmin_with_form_containing_exclude_fields(self):
+
+        class TestModel1Form(forms.ModelForm):
+            class Meta:
+                model = TestModel1
+                exclude = ['var1']
+
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, ModelAdmin1)
+        modeladmin.form = TestModel1Form
+
+        return modeladmin
+
+    def _modeladmin_with_func_on_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, self.admin_site)
+        modeladmin.fields = ['var1', 'func']
+
+        return modeladmin
+
+    # Objects
+
+    def _obj_simple(self, obj_params):
+        return TestModel1()
+
+    GeneralParams = namedtuple(
+        'GeneralParams', 'name, request_user, obj_func, obj_params, '
+                         'modeladmin_func, result')
+
+    general_params = [
+        # Add objects
+        GeneralParams(
+            name='add_from_a_simple_user_without_permissions',
+            request_user=RequestUser('user_without_permissions', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': False,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_add_permission',
+            request_user=RequestUser('user_with_a_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': False,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_view_permission',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_view_permission_and_id_on'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_id_on_fields,
+            result={
+                'get_readonly_fields': ('id', ),
+                'get_fields': ['id'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        # View permission only, var5 is a non-editable field and var6 is a
+        # property field. Get_readonly_fields will return this field but the
+        # change_view will raise FieldError on change_permission. This is
+        # normal because the default modeladmin requires those field to be on
+        # the readonly_fields option
+        GeneralParams(
+            name='add_from_a_simple_user_with_view_permission_and_property_on'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_property_on_fields,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4', 'var5',
+                                        'var6'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4', 'var5', 'var6'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_view_permission_and_func_on'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_func_on_fields,
+            result={
+                'get_readonly_fields': ('var1', 'func'),
+                'get_fields': ['var1', 'func'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_view_permission_and_exclude'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_exclude_fields,
+            result={
+                'get_readonly_fields': ('var2', 'var3', 'var4'),
+                'get_fields': ['var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_change_permission',
+            request_user=RequestUser('user_with_c_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_delete_permission',
+            request_user=RequestUser('user_with_d_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': False,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_add_view_permission',
+            request_user=RequestUser('user_with_av_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_change_view_permission',
+            request_user=RequestUser('user_with_cv_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_delete_view_permission',
+            request_user=RequestUser('user_with_dv_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_add_view_change_permission',
+            request_user=RequestUser('user_with_avc_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_all_permissions',
+            request_user=RequestUser('user_with_avcd_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_super_user',
+            request_user=RequestUser('super_user', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+
+        # Change objects
+        # TODO: exam why this happening, we expect all the fields
+        GeneralParams(
+            name='change_from_a_simple_user_without_permissions',
+            request_user=RequestUser('user_without_permissions', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': False,
+                    'change_only': False,
+                },
+            }
+        ),
+        # TODO: exam why this happening, we expect all the fields
+        GeneralParams(
+            name='change_from_a_simple_user_with_add_permission',
+            request_user=RequestUser('user_with_a_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': False,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission_and_id_on'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_id_on_fields,
+            result={
+                'get_readonly_fields': ('id',),
+                'get_fields': ['id'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
         # View permission only, var5 is a non-editable field and var6 is a
         # propery field. Get_readonly_fields will return this field but the
         # change_view will raise FieldError on change_permission. This is
         # normal because the default modeladmin requires those field to be on
         # the readonly_fields option
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
-                                             'var5', 'var6']
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission_and_property'
+                 '_on_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_property_on_fields,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4', 'var5',
+                                        'var6'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4', 'var5', 'var6'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission_and_func_on'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_func_on_fields,
+            result={
+                'get_readonly_fields': ('var1', 'func'),
+                'get_fields': ['var1', 'func'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission_and_exclude'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_exclude_fields,
+            result={
+                'get_readonly_fields': ('var2', 'var3', 'var4'),
+                'get_fields': ['var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission_and_custom_'
+                 'form_with_exclude',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_form_containing_exclude_fields,
+            result={
+                'get_readonly_fields': ('var2', 'var3', 'var4'),
+                'get_fields': ['var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_change_permission',
+            request_user=RequestUser('user_with_c_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        # TODO: exam why this happening, we expect all the fields
+        GeneralParams(
+            name='change_from_a_simple_user_with_delete_permission',
+            request_user=RequestUser('user_with_d_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': False,
+                'has_change_permission': {
+                    'default': False,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_add_view_permission',
+            request_user=RequestUser('user_with_av_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_change_view_permission',
+            request_user=RequestUser('user_with_cv_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_delete_view_permission',
+            request_user=RequestUser('user_with_dv_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        # TODO: exam why actions return something. We expect to return None
+        GeneralParams(
+            name='change_from_a_simple_user_with_add_view_change_permission',
+            request_user=RequestUser('user_with_avc_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_all_permissions',
+            request_user=RequestUser(
+                'user_with_avcd_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_super_user',
+            request_user=RequestUser('super_user', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_readonly_fields': (),
+                'get_fields': ['var1', 'var2', 'var3', 'var4'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': True,
+                },
+            }
+        ),
+    ]
 
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4', 'var5',
-                                   'var6')
+    @parameterized.expand(general_params)
+    def test_get_readonly_fields(self, name, request_user, obj_func,
+                                 obj_params, modeladmin_func, result):
+        modeladmin = modeladmin_func(self)
+        obj = obj_func(self, obj_params) if obj_func else None
+        url_args = (obj.pk,) if obj else ()
+        url = reverse(
+            'test_admin:test_app_testmodel1_%s' % request_user.view,
+            args=url_args,
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        readonly_fields = modeladmin.get_readonly_fields(request, obj)
 
-    def test_get_readonly_fields_simple_user_5(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.fields = ['var1', 'func']
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
+        assert readonly_fields == result['get_readonly_fields']
 
-        assert readonly_fields == ('var1', 'func')
-
-    def test_get_readonly_fields_simple_user_6(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel5)
-        readonly_fields = self.modeladmin_testmodel5.get_readonly_fields(
-            self.django_request(simple_user))
+    def test_get_readonly_fields__add_with_custom_id(self):
+        """
+        Normally the user with view permisssion will get a PermissionDenied
+        from the add_view. The function must return all the fields as
+        readonly
+        """
+        modeladmin = ModelAdmin1(TestModel5, self.admin_site)
+        self.admin_site.register(TestModel5, ModelAdmin1)
+        url = reverse(
+            'test_admin:test_app_testmodel5_add',
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = self.user_with_v_perm_on_model5
+        readonly_fields = modeladmin.get_readonly_fields(request)
 
         assert readonly_fields == ('var0', 'var1', 'var2', 'var3', 'var4')
 
-    def test_get_readonly_fields_simple_user_7_without_obj(self):
-        # View and change permission (chnage permission is stronger)
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
-
-    def test_get_readonly_fields_simple_user_7_with_obj(self):
-        # View and change permission (chnage permission is stronger)
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel1)
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_simple_user_8_without_obj(self):
-        # View and add permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_simple_user_8_with_obj(self):
-        # View and add permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel1)
-
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
-
-    def test_get_readonly_fields_simple_user_9(self):
-        # View and delete permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
-
-    def test_get_readonly_fields_simple_user_10(self):
-        # All permissions (change permission is stronger)
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_1(self):
-        super_user = self.create_super_user()
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_2(self):
-        super_user = self.create_super_user()
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(super_user), self.object_testmodel1)
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_3(self):
-        super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['id']
-        self.modeladmin_testmodel1.readonly_fields = ('id',)
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ('id',)
-
-    def test_get_readonly_fields_super_user_4(self):
-        super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
-                                             'var5', 'var6']
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_5(self):
-        super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['var1', 'func']
-        readonly_fields = self.modeladmin_testmodel1.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_6(self):
-        super_user = self.create_super_user()
-        readonly_fields = self.modeladmin_testmodel5.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ()
-
-    # get_fields
-
-    def test_get_fields_simple_user_1(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(simple_user))
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
-
-    def test_get_fields_simple_user_2(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(simple_user), self.object_testmodel1)
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
-
-    def test_get_fields_super_user_1(self):
-        super_user = self.create_super_user()
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(super_user))
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
-
-    def test_get_fields_super_user_2(self):
-        super_user = self.create_super_user()
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(super_user), self.object_testmodel1)
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
-
-    # test excluded fields
-    def test_get_fields_excluded_simple_user_1(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.exclude = ['var4']
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(simple_user))
-
-        assert fields == ['var1', 'var2', 'var3']
-
-    def test_get_fields_excluded_simple_user_2(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.exclude = ['var4']
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(simple_user), self.object_testmodel1)
-
-        assert fields == ['var1', 'var2', 'var3']
-
-    def test_get_fields_excluded_super_user_1(self):
-        super_user = self.create_super_user()
-        self.modeladmin_testmodel1.exclude = ['var4']
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(super_user))
-
-        assert fields == ['var1', 'var2', 'var3']
-
-    def test_get_fields_excluded_super_user_2(self):
-        super_user = self.create_super_user()
-        self.modeladmin_testmodel1.exclude = ['var4']
-        fields = self.modeladmin_testmodel1.get_fields(
-            self.django_request(super_user), self.object_testmodel1)
-
-        assert fields == ['var1', 'var2', 'var3']
-
-    def test_get_fields_excluded_model_form_super_user(self):
-        super_user = self.create_super_user()
-        fields = self.modeladmin_testmodel1_with_form_exclude.get_fields(
-            self.django_request(super_user), self.object_testmodel1)
-
-        assert fields == ['var1', 'var2', 'var3']
-
-    def test_get_fields_excluded_model_form_and_admin_exclude_super_user(self):
-        super_user = self.create_super_user()
-        # should override the form exclude when explicitly set on the
-        # admin exclude
-        self.modeladmin_testmodel1_with_form_exclude.exclude = ['var3']
-        fields = self.modeladmin_testmodel1_with_form_exclude.get_fields(
-            self.django_request(super_user), self.object_testmodel1)
-        assert fields == ['var1', 'var2', 'var4']
-
-    # get_actions
-
-    def test_get_actions_simple_user_1(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        actions = self.modeladmin_testmodel1.get_actions(
-            self.django_request(simple_user))
-
-        assert not actions
-
-    def test_get_actions_simple_user_2(self):
-        # View and add permissions
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        actions = self.modeladmin_testmodel1.get_actions(
-            self.django_request(simple_user))
-
-        assert not actions
-
-    def test_get_actions_simple_user_3(self):
-        # View and change permissions (chnage permission is stronger)
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        actions = self.modeladmin_testmodel1.get_actions(
-            self.django_request(simple_user))
-
-        assert len(actions) == 1
-
-    def test_get_actions_simple_user_4(self):
-        # View and delete permissions
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        actions = self.modeladmin_testmodel1.get_actions(
-            self.django_request(simple_user))
-
-        assert not actions
-
-    def test_get_actions_simple_user_5(self):
-        # All permissions
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        actions = self.modeladmin_testmodel1.get_actions(
-            self.django_request(simple_user))
-
-        assert len(actions) == 1
-
-    def test_get_actions_super_user(self):
-        super_user = self.create_super_user()
-        actions = self.modeladmin_testmodel1.get_actions(
-            self.django_request(super_user))
-
-        assert len(actions) == 1
-
-    # has_view_permission
-
-    def test_has_view_permission_simple_user_1(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(simple_user))
-
-    def test_has_view_permission_simple_user_2(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(simple_user), self.object_testmodel1)
-
-    def test_has_view_permission_simple_user_3(self):
-        # View and add permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(simple_user))
-
-    def test_has_view_permission_simple_user_4(self):
-        # View and change permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(simple_user))
-
-    def test_has_view_permission_simple_user_5(self):
-        # View and delete permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(simple_user))
-
-    def test_has_view_permission_simple_user_6(self):
-        # All permissions
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(simple_user))
-
-    def test_has_view_permission_super_user_1(self):
-        super_user = self.create_super_user()
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(super_user))
-
-    def test_has_view_permission_super_user_2(self):
-        super_user = self.create_super_user()
-        assert self.modeladmin_testmodel1.has_view_permission(
-            self.django_request(super_user), self.object_testmodel1)
-
-    # has_change_permission
-
-    def test_has_change_permission_simple_user_1(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user))
-
-    def test_has_change_permission_simple_user_2(self):
-        # View permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user), self.object_testmodel1)
-
-    def test_has_change_permission_simple_user_3(self):
-        # View and add permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user))
-
-    def test_has_change_permission_simple_user_4(self):
-        # View and change permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user))
-
-    def test_has_change_permission_simple_user_5(self):
-        # View and delete permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user))
-
-    def test_has_change_permission_simple_user_6(self):
-        # All permissions
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user))
-
-    def test_has_change_permission_simple_user_7(self):
-        # Change permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user), only_change=True)
-
-    def test_has_change_permission_simple_user_8(self):
-        # View and change permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user), only_change=True)
-
-    def test_has_change_permission_simple_user_9(self):
-        # Add and change permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user), only_change=True)
-
-    def test_has_change_permission_simple_user_10(self):
-        # Delete and change permission
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user), only_change=True)
-
-    def test_has_change_permission_simple_user_11(self):
-        # All permissions
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.add_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.delete_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel1)
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user), only_change=True)
-
-    def test_has_change_permission_simple_user_12(self):
-        # Add permission only
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        assert not self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(simple_user), only_change=True)
-
-    def test_has_change_permission_super_user_1(self):
-        super_user = self.create_super_user()
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(super_user))
-
-    def test_has_change_permission_super_user_2(self):
-        super_user = self.create_super_user()
-        assert self.modeladmin_testmodel1.has_change_permission(
-            self.django_request(super_user), self.object_testmodel1)
-
-
-@pytest.mark.usefixtures("django_request")
-class TestAdminViewPermissionModelAdmin(AdminViewPermissionTestCase):
-
-    # get_inline_instances
-
-    def test_get_inline_instances_simple_user_1(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.django_request(simple_user))
-
-        assert inlines == []
-
-    def test_get_inline_instances_simple_user_2(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.django_request(simple_user))
-
-        assert len(inlines) == 1
-        assert inlines[0].can_delete is False
-        assert inlines[0].max_num == 0
-
-    def test_get_inline_instances_simple_user_3(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        simple_user.user_permissions.add(self.view_permission_testmodel6)
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.django_request(simple_user))
-
-        assert len(inlines) == 2
-        for inline in inlines:
-            assert inline.can_delete is False
-            assert inline.max_num == 0
-
-    def test_get_inline_instances_simple_user_4(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        simple_user.user_permissions.add(self.change_permission_testmodel4)
-        simple_user.user_permissions.add(self.view_permission_testmodel6)
-        simple_user.user_permissions.add(self.change_permission_testmodel6)
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.django_request(simple_user))
-
-        assert len(inlines) == 2
-        for inline in inlines:
-            # Yes, but the delete checkbox doesn't appear hopefully
-            assert inline.can_delete is True
-            assert inline.max_num == 0
-
-    def test_get_inline_instances_simple_user_5(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        simple_user.user_permissions.add(self.add_permission_testmodel4)
-        simple_user.user_permissions.add(self.view_permission_testmodel6)
-        simple_user.user_permissions.add(self.add_permission_testmodel6)
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.django_request(simple_user))
-
-        assert len(inlines) == 2
-        for inline in inlines:
-            assert inline.can_delete is False
-            # TODO: fix this, the user should show the forms
-            assert inline.max_num is None
-
-    def test_get_inline_instances_super_user_1(self):
-        super_user = self.create_super_user()
-        inlines = self.modeladmin_testmodel1.get_inline_instances(
-            self.django_request(super_user))
-
-        for inline in inlines:
-            assert isinstance(inline, AdminViewPermissionInlineModelAdmin)
-
-    # get_model_perms
-
-    def test_get_model_perms_simple_user_1(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        assert self.modeladmin_testmodel1.get_model_perms(
-            self.django_request(simple_user)) == {
-            'add': False,
-            'change': True,
-            'delete': False,
-            'view': True
-        }
-
-    def test_get_model_perms_simple_user_2(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        assert self.modeladmin_testmodel1.get_model_perms(
-            self.django_request(simple_user)) == {
-            'add': False,
-            'change': True,
-            'delete': False,
-            'view': True
-        }
-
-    def test_get_model_perms_super_user_1(self):
-        super_user = self.create_super_user()
-        assert self.modeladmin_testmodel1.get_model_perms(
-            self.django_request(super_user)) == {
-            'add': True,
-            'change': True,
-            'delete': True,
-            'view': True
-        }
-
-    def test_get_model_perms_super_user_2(self):
-        super_user = self.create_super_user()
-        assert self.modeladmin_testmodel1.get_model_perms(
-            self.django_request(super_user)) == {
-            'add': True,
-            'change': True,
-            'delete': True,
-            'view': True
-        }
-
-    # change_view
-
-    def test_change_view_simple_user_1(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        change_view = self.modeladmin_testmodel1.change_view(
-            self.django_request(simple_user), str(self.object_testmodel1.pk))
-
-        assert change_view.status_code == 200
-        assert change_view.context_data['title'] == 'View test model1'
-        assert not change_view.context_data['show_save']
-        assert not change_view.context_data['show_save_and_continue']
-
-    def test_change_view_simple_user_2(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
-                                             'var5', 'var6']
-        change_view = self.modeladmin_testmodel1.change_view(
-            self.django_request(simple_user), str(self.object_testmodel1.pk))
-
-        assert change_view.status_code == 200
-        assert change_view.context_data['title'] == 'View test model1'
-        assert not change_view.context_data['show_save']
-        assert not change_view.context_data['show_save_and_continue']
-
-    def test_change_view_simple_user_3(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        change_view = self.modeladmin_testmodel1.change_view(
-            self.django_request(simple_user), str(self.object_testmodel1.pk))
-
-        assert change_view.context_data['title'] == 'View test model1'
-        assert not change_view.context_data['show_save']
-        assert not change_view.context_data['show_save_and_continue']
-
-    def test_change_view_simple_user_4(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel1)
-        simple_user.user_permissions.add(self.change_permission_testmodel4)
-        change_view = self.modeladmin_testmodel1.change_view(
-            self.django_request(simple_user), str(self.object_testmodel1.pk))
-
-        assert change_view.context_data['title'] == 'View test model1'
-        assert change_view.context_data['show_save']
-        assert change_view.context_data['show_save_and_continue']
-
-    def test_change_view_super_user_1(self):
-        super_user = self.create_super_user()
-        change_view = self.modeladmin_testmodel1.change_view(
-            self.django_request(super_user), str(self.object_testmodel1.pk))
-
-        assert change_view.status_code == 200
-        assert change_view.context_data['title'] == 'Change test model1'
-
-    def test_change_view_super_user_2(self):
-        super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
-                                             'var5', 'var6']
-        with pytest.raises(FieldError):
-            self.modeladmin_testmodel1.change_view(
-                self.django_request(super_user),
-                str(self.object_testmodel1.pk)
-            )
-
-    def test_change_view_super_user_3(self):
-        super_user = self.create_super_user()
-        self.modeladmin_testmodel1.fields = ['var1', 'var2', 'var3', 'var4',
-                                             'var5', 'var6']
-        self.modeladmin_testmodel1.readonly_fields = ['var5', 'var6']
-        change_view = self.modeladmin_testmodel1.change_view(
-            self.django_request(super_user), str(self.object_testmodel1.pk))
-
-        assert change_view.status_code == 200
-        assert change_view.context_data['title'] == 'Change test model1'
-
-
-@pytest.mark.usefixtures("django_request")
-class TestAdminViewPermissionInlineModelAdmin(
-    AdminViewPermissionInlinesTestCase):  # noqa: E125
-
-    # readonly_fields
-
-    def test_get_readonly_fields_simple_user_1(self):
-        simple_user = self.create_simple_user()
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel4)
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_simple_user_2(self):
-        simple_user = self.create_simple_user()
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel1)
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_simple_user_3(self):
-        simple_user = self.create_simple_user()
-        self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2']
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel4)
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_simple_user_4(self):
-        simple_user = self.create_simple_user()
-        self.inlinemodeladmin_testmodel4.fields = ['id']
-        self.inlinemodeladmin_testmodel4.readonly_fields = ('id',)
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ('id',)
-
-    def test_get_readonly_fields_simple_user_5(self):
-        simple_user = self.create_simple_user()
-        readonly_fields = self.inlinemodeladmin_testmodel6.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel6)
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_simple_user_6(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
-
-    def test_get_readonly_fields_simple_user_7(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user), self.object_testmodel1)
-
-        assert readonly_fields == ('var1', 'var2', 'var3', 'var4')
-
-    def test_get_readonly_fields_simple_user_8(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2']
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ('var1', 'var2')
-
-    def test_get_readonly_fields_simple_user_9(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        self.inlinemodeladmin_testmodel4.fields = ['id']
-        self.inlinemodeladmin_testmodel4.readonly_fields = ('id',)
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(simple_user))
-
-        assert readonly_fields == ('id',)
-
-    def test_get_readonly_fields_super_user_1(self):
-        super_user = self.create_super_user()
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_2(self):
-        super_user = self.create_super_user()
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(super_user), self.object_testmodel1)
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_3(self):
-        super_user = self.create_super_user()
-        self.inlinemodeladmin_testmodel4.fields = ['var1', 'var2']
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ()
-
-    def test_get_readonly_fields_super_user_4(self):
-        super_user = self.create_super_user()
-        self.inlinemodeladmin_testmodel4.fields = ['id']
-        self.inlinemodeladmin_testmodel4.readonly_fields = ('id',)
-        readonly_fields = self.inlinemodeladmin_testmodel4.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ('id',)
-
-    def test_get_readonly_fields_super_user_5(self):
-        super_user = self.create_super_user()
-        readonly_fields = self.inlinemodeladmin_testmodel6.get_readonly_fields(
-            self.django_request(super_user))
-
-        assert readonly_fields == ()
-
-    # get_fields
-
-    def test_get_fields_simple_user_1(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        fields = self.inlinemodeladmin_testmodel4.get_fields(
-            self.django_request(simple_user))
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
-
-    def test_get_fields_simple_user_2(self):
-        simple_user = self.create_simple_user()
-        simple_user.user_permissions.add(self.view_permission_testmodel4)
-        fields = self.inlinemodeladmin_testmodel4.get_fields(
-            self.django_request(simple_user))
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
-
-    def test_get_fields_super_user_1(self):
-        super_user = self.create_super_user()
-        fields = self.inlinemodeladmin_testmodel4.get_fields(
-            self.django_request(super_user))
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
-
-    def test_get_fields_super_user_2(self):
-        super_user = self.create_super_user()
-        fields = self.inlinemodeladmin_testmodel4.get_fields(
-            self.django_request(super_user))
-
-        assert fields == ['var1', 'var2', 'var3', 'var4']
+    def test_get_readonly_fields__change_with_custom_id(self):
+        modeladmin = ModelAdmin1(TestModel5, self.admin_site)
+        self.admin_site.register(TestModel5, ModelAdmin1)
+        obj = TestModel5()
+        url = reverse(
+            'test_admin:test_app_testmodel5_change',
+            args=(1, ),
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = self.user_with_v_perm_on_model5
+        readonly_fields = modeladmin.get_readonly_fields(request, obj)
+
+        assert readonly_fields == ('var0', 'var1', 'var2', 'var3', 'var4')
+
+    @parameterized.expand(general_params)
+    def test_get_fields(self, name, request_user, obj_func, obj_params,
+                        modeladmin_func, result):
+        modeladmin = modeladmin_func(self)
+        obj = obj_func(self, obj_params) if obj_func else None
+        url_args = (obj.pk,) if obj else ()
+        url = reverse(
+            'admin:test_app_testmodel1_%s' % request_user.view,
+            args=url_args,
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        readonly_fields = modeladmin.get_fields(request, obj)
+
+        assert readonly_fields == result['get_fields']
+
+    @parameterized.expand(general_params)
+    def test_has_view_permission(self, name, request_user, obj_func,
+                                 obj_params, modeladmin_func, result):
+        modeladmin = modeladmin_func(self)
+        obj = obj_func(self, obj_params) if obj_func else None
+        url_args = (obj.pk,) if obj else ()
+        url = reverse(
+            'test_admin:test_app_testmodel1_%s' % request_user.view,
+            args=url_args,
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        has_view_permission = modeladmin.has_view_permission(request)
+
+        assert has_view_permission == result['has_view_permission']
+
+    @parameterized.expand(general_params)
+    def test_has_change_permission(self, name, request_user, obj_func,
+                                   obj_params, modeladmin_func, result):
+        modeladmin = modeladmin_func(self)
+        obj = obj_func(self, obj_params) if obj_func else None
+        url_args = (obj.pk,) if obj else ()
+        url = reverse(
+            'test_admin:test_app_testmodel1_%s' % request_user.view,
+            args=url_args,
+            urlconf=create_urlconf(self.admin_site)
+        )
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        has_change_permission_default = modeladmin.has_change_permission(
+            request, obj=obj)
+        has_change_permission_only = modeladmin.has_change_permission(
+            request, obj=obj, only_change=True)
+
+        assert (has_change_permission_default ==
+                result['has_change_permission']['default'])
+        assert (has_change_permission_only ==
+                result['has_change_permission']['change_only'])
+
+    ActionParams = namedtuple(
+        'ActionParam', 'name, request_user, modeladmin_func, result')
+
+    action_params = [
+        # Add objects
+        # Weird but the default implementation return the delete action
+        # so we trust the view to return PermissionDenied
+        ActionParams(
+            name='simple_user_without_permissions',
+            request_user=RequestUser('user_without_permissions', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+        # Weird but the default implementation return the delete action
+        # so we trust the view to return PermissionDenied
+        ActionParams(
+            name='add_from_a_simple_user_with_add_permission',
+            request_user=RequestUser('user_with_a_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_view_permission',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: x is None},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_change_permission',
+            request_user=RequestUser('user_with_c_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_delete_permission',
+            request_user=RequestUser('user_with_d_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_add_view_permission',
+            request_user=RequestUser('user_with_av_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: x is None},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_change_view_permission',
+            request_user=RequestUser('user_with_cv_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_delete_view_permission',
+            request_user=RequestUser('user_with_dv_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: x is None},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_add_view_change_permission',
+            request_user=RequestUser('user_with_avc_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+        ActionParams(
+            name='add_from_a_simple_user_with_all_permissions',
+            request_user=RequestUser('user_with_avcd_perm_on_model1', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+        ActionParams(
+            name='add_from_a_super_user',
+            request_user=RequestUser('super_user', 'add'),
+            modeladmin_func=_modeladmin_simple,
+            result={'get_actions': lambda x: len(x) == 1},
+        ),
+
+    ]
+
+    @parameterized.expand(action_params)
+    def test_get_actions(self, name, request_user, modeladmin_func, result):
+        modeladmin = modeladmin_func(self)
+        url = reverse(
+            'admin:test_app_testmodel1_%s' % request_user.view,
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        actions = modeladmin.get_actions(request)
+
+        assert result['get_actions'](actions)
+
+
+class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        super(TestAdminViewPermissionModelAdmin, cls).setUpTestData()
+
+        # Users
+        cls.user_without_permissions = create_simple_user()
+
+        cls.user_with_a_perm = create_simple_user()
+        cls.user_with_a_perm.user_permissions.add(
+            cls.add_permission_model1,
+        )
+
+        cls.user_with_v_perm_on_model1 = create_simple_user()
+        cls.user_with_v_perm_on_model1.user_permissions.add(
+            cls.view_permission_model1,
+        )
+
+        cls.user_with_v_perm_on_model1_4 = create_simple_user()
+        cls.user_with_v_perm_on_model1_4.user_permissions.add(
+            cls.view_permission_model1,
+            cls.view_permission_model4,
+        )
+
+        cls.user_with_av_perm_on_model1_4 = create_simple_user()
+        cls.user_with_av_perm_on_model1_4.user_permissions.add(
+            cls.view_permission_model1,
+            cls.add_permission_model4,
+        )
+
+        cls.user_with_cv_perm_on_model1_4 = create_simple_user()
+        cls.user_with_cv_perm_on_model1_4.user_permissions.add(
+            cls.view_permission_model1,
+            cls.change_permission_model4,
+        )
+
+        cls.user_with_dv_perm_on_model1_4 = create_simple_user()
+        cls.user_with_dv_perm_on_model1_4.user_permissions.add(
+            cls.view_permission_model1,
+            cls.delete_permission_model4,
+        )
+
+        cls.user_with_vcd_perm_on_model1_4 = create_simple_user()
+        cls.user_with_vcd_perm_on_model1_4.user_permissions.add(
+            cls.view_permission_model1,
+            cls.change_permission_model4,
+            cls.delete_permission_model4,
+        )
+
+        cls.user_with_v_perm_on_model1_4_6 = create_simple_user()
+        cls.user_with_v_perm_on_model1_4_6.user_permissions.add(
+            cls.view_permission_model1,
+            cls.view_permission_model4,
+            cls.view_permission_model6,
+        )
+
+        cls.user_with_cv_perm_on_model1_4_6 = create_simple_user()
+        cls.user_with_cv_perm_on_model1_4_6.user_permissions.add(
+            cls.view_permission_model1,
+            cls.view_permission_model4,
+            cls.change_permission_model4,
+            cls.view_permission_model6,
+            cls.change_permission_model6,
+        )
+
+        cls.user_with_av_perm_on_model1_4_6 = create_simple_user()
+        cls.user_with_av_perm_on_model1_4_6.user_permissions.add(
+            cls.view_permission_model1,
+            cls.view_permission_model4,
+            cls.add_permission_model4,
+            cls.view_permission_model6,
+            cls.add_permission_model6,
+        )
+
+        cls.super_user = create_super_user()
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAdminViewPermissionModelAdmin, cls).setUpClass()
+        cls.factory = RequestFactory()
+
+    def setUp(self):
+        self.admin_site = AdminSite('test_admin')
+
+    RequestUser = namedtuple('RequestUser', 'user, view')
+
+    # Modeladmin
+
+    def _modeladmin_simple(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        return ModelAdmin1(TestModel1, self.admin_site)
+
+    def _modeladmin_with_id_on_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, self.admin_site)
+        modeladmin.fields = ['id']
+        modeladmin.readonly_fields = ('id',)
+
+        return modeladmin
+
+    def _modeladmin_with_property_on_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, self.admin_site)
+        modeladmin.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+
+        return modeladmin
+
+    def _modeladmin_with_func_on_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, self.admin_site)
+        modeladmin.fields = ['var1', 'func']
+
+        return modeladmin
+
+    def _modeladmin_with_custom_id(self):
+        return ModelAdmin1(TestModel5, self.admin_site)
+
+    # Objects
+
+    def _obj_simple(self, obj_params):
+        return mommy.make('test_app.TestModel1', **obj_params)
+
+    GeneralParams = namedtuple(
+        'GeneralParams', 'name, request_user, obj_func, obj_params, '
+                         'modeladmin_func, result')
+
+    general_params = [
+        # Add objects
+        GeneralParams(
+            name='add_from_a_user_with_view_permission_on_testmodel1',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {'count': 0, 'inlines': None},
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': None,
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_user_with_view_permission_on_testmodel1_4',
+            request_user=RequestUser('user_with_v_perm_on_model1_4', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 1,
+                    'inlines': [
+                        {'can_delete': False, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin}
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': None,
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_user_with_view_permission_on_testmodel1_4_6',
+            request_user=RequestUser('user_with_v_perm_on_model1_4_6', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': False, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': False, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': None,
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_user_with_change_view_permission_on_'
+                 'testmodel1_4_6',
+            request_user=RequestUser('user_with_cv_perm_on_model1_4_6', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': True, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': None,
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_user_with_add_view_permission_on_'
+                 'testmodel1_4_6',
+            request_user=RequestUser('user_with_av_perm_on_model1_4_6', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': False, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': False, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': None,
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_super_user',
+            request_user=RequestUser('super_user', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': True, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': True,
+                    'change': True,
+                    'delete': True,
+                    'view': True,
+                },
+                'change_view': None,
+            }
+        ),
+
+        # Change objects
+        GeneralParams(
+            name='change_from_a_user_with_view_permission_on_testmodel1',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {'count': 0, 'inlines': None},
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': False,
+                        'show_save_and_continue': False,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission_and_property'
+                 '_on_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_property_on_fields,
+            result={
+                'get_inline_instances': {'count': 0, 'inlines': None},
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': False,
+                        'show_save_and_continue': False,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_user_with_view_permission_on_testmodel1_4',
+            request_user=RequestUser('user_with_v_perm_on_model1_4', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 1,
+                    'inlines': [
+                        {'can_delete': False, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin}
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': False,
+                        'show_save_and_continue': False,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_user_with_add_view_permission_on_'
+                 'testmodel1_4',
+            request_user=RequestUser(
+                'user_with_av_perm_on_model1_4', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 1,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin}
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': True,
+                        'show_save_and_continue': True,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_user_with_change_view_permission_on_'
+                 'testmodel1_4',
+            request_user=RequestUser(
+                'user_with_cv_perm_on_model1_4', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 1,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin}
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': True,
+                        'show_save_and_continue': True,
+                    }
+                },
+            }
+        ),
+        # Here it's bit weird, but by default django needs change and delete
+        # permission in order to be able to delete an inline, see next test.
+        GeneralParams(
+            name='change_from_a_user_with_delete_view_permission_on_'
+                 'testmodel1_4',
+            request_user=RequestUser(
+                'user_with_dv_perm_on_model1_4', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 1,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin}
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': False,
+                        'show_save_and_continue': False,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_user_with_view_change_delete_permission_on_'
+                 'testmodel1_4',
+            request_user=RequestUser(
+                'user_with_vcd_perm_on_model1_4', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 1,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin}
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': True,
+                        'show_save_and_continue': True,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_user_with_view_permission_on_testmodel1_4_6',
+            request_user=RequestUser(
+                'user_with_v_perm_on_model1_4_6', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': False, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': False, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': False,
+                        'show_save_and_continue': False,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_user_with_change_view_permission_on_'
+                 'testmodel1_4_6',
+            request_user=RequestUser(
+                'user_with_cv_perm_on_model1_4_6', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': True, 'max_num': 0,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': True,
+                        'show_save_and_continue': True,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_user_with_add_view_permission_on_'
+                 'testmodel1_4_6',
+            request_user=RequestUser(
+                'user_with_av_perm_on_model1_4_6', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': False, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': False, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': False,
+                    'change': True,
+                    'delete': False,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'View test model1',
+                        'show_save': True,
+                        'show_save_and_continue': True,
+                    }
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_super_user',
+            request_user=RequestUser('super_user', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_simple,
+            result={
+                'get_inline_instances': {
+                    'count': 2,
+                    'inlines': [
+                        {'can_delete': True, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                        {'can_delete': True, 'max_num': None,
+                         'class': AdminViewPermissionInlineModelAdmin},
+                    ]
+                },
+                'get_model_perms': {
+                    'add': True,
+                    'change': True,
+                    'delete': True,
+                    'view': True,
+                },
+                'change_view': {
+                    'status_code': 200,
+                    'context_data': {
+                        'title': 'Change test model1',
+                    }
+                },
+            }
+        ),
+    ]
+
+    @parameterized.expand(general_params)
+    def test_get_inline_instances(self, name, request_user, obj_func,
+                                  obj_params, modeladmin_func, result):
+        modeladmin = modeladmin_func(self)
+        obj = obj_func(self, obj_params) if obj_func else None
+        url_args = (obj.pk,) if obj else ()
+        url = reverse(
+            'test_admin:test_app_testmodel1_%s' % request_user.view,
+            args=url_args,
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        inlines = modeladmin.get_inline_instances(request, obj)
+
+        assert len(inlines) == result['get_inline_instances']['count']
+        if result['get_inline_instances']:
+            for i, inline in enumerate(inlines):
+                assert (inline.can_delete ==
+                        result['get_inline_instances']['inlines'][i][
+                            'can_delete'])
+                assert (inline.max_num ==
+                        result['get_inline_instances']['inlines'][i][
+                            'max_num'])
+
+    @parameterized.expand(general_params)
+    def test_get_model_perms(self, name, request_user, obj_func,
+                             obj_params, modeladmin_func, result):
+        modeladmin = modeladmin_func(self)
+        obj = obj_func(self, obj_params) if obj_func else None
+        url_args = (obj.pk,) if obj else ()
+        url = reverse(
+            'test_admin:test_app_testmodel1_%s' % request_user.view,
+            args=url_args,
+            urlconf=create_urlconf(self.admin_site),
+        )
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        model_perms = modeladmin.get_model_perms(request)
+
+        assert model_perms == result['get_model_perms']
+
+    @parameterized.expand(general_params)
+    def test_change_view(self, name, request_user, obj_func, obj_params,
+                         modeladmin_func, result):
+        if not result['change_view']:
+            pytest.skip('not a case')
+
+        modeladmin = modeladmin_func(self)
+        obj = obj_func(self, obj_params) if obj_func else None
+        url_args = (obj.pk,) if obj else ()
+        url = reverse(
+            'test_admin:test_app_testmodel1_%s' % request_user.view,
+            args=url_args,
+            urlconf=create_urlconf(self.admin_site)
+        )
+
+        request = self.factory.get(url)
+        request.user = getattr(self, request_user.user)
+        response = modeladmin.change_view(request, str(obj.pk))
+
+        assert response.status_code == result['change_view']['status_code']
+        assert (response.context_data['title'] ==
+                result['change_view']['context_data']['title'])
+        if 'show_save' in result['change_view']['context_data']:
+            assert (response.context_data['show_save'] ==
+                    result['change_view']['context_data']['show_save'])
+        if 'show_save_and_continue' in result['change_view']['context_data']:
+            assert (response.context_data['show_save_and_continue'] ==
+                    result['change_view']['context_data'][
+                        'show_save_and_continue'])
 
 
 class TestAdminViewPermissionAdminSite(SimpleTestCase):
+
     def setUp(self):
         self.admin_site = AdminViewPermissionAdminSite('admin')
 

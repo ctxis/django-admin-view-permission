@@ -7,6 +7,7 @@ from django.test import TestCase, override_settings
 
 
 class TestAdminViewPermissionConfig(TestCase):
+
     def setUp(self):
         class Meta:
             permissions = (
