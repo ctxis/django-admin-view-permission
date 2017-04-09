@@ -16,6 +16,6 @@ Example
 ::
 
      ADMIN_VIEW_PERMISSION_MODELS = [
-         auth.User,
+         'auth.User',
          ...
      ]
