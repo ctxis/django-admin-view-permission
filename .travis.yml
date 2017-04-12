@@ -11,15 +11,14 @@ python:
 
 # diferrent django versions
 env:
-  - DJANGO=1.9
-  - DJANGO=1.8
-  - DJANGO=1.10
-  - DJANGO=1.11
+  - DJANGO=django<1.9  # 1.8.x
+  - DJANGO=django<1.10 # 1.9.x
+  - DJANGO=django<1.11 # 1.10.x
+  - DJANGO=django<1.12 # 1.11.x
 
 # install dependencies
 install:
-  - pip install -r requirements-debug.txt
-  - pip install Django==$DJANGO
+  - pip install $DJANGO -r requirements-debug.txt
 
 # run tests
 script:
