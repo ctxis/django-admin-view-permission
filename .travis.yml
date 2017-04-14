@@ -2,6 +2,8 @@
 
 language: python
 
+cache: pip
+
 # diferrent python versions
 python:
   - "2.7"
@@ -19,6 +21,10 @@ env:
 # install dependencies
 install:
   - pip install $DJANGO -r requirements-debug.txt
+
+# print pip packages
+before_script:
+  - pip freeze
 
 # run tests
 script:
