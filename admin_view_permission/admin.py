@@ -92,6 +92,25 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
             else:
                 return change_permission
 
+    def get_excluded_fields(self):
+        """
+        Check if we have no excluded fields defined as we never want to
+        show those (to any user)
+        """
+        if self.exclude is None:
+            exclude = []
+        else:
+            exclude = list(self.exclude)
+
+        # logic taken from: django.contrib.admin.options.ModelAdmin#get_form
+        if self.exclude is None and hasattr(
+                self.form, '_meta') and self.form._meta.exclude:
+            # Take the custom ModelForm's Meta.exclude into account only
+            # if the ModelAdmin doesn't define its own.
+            exclude.extend(self.form._meta.exclude)
+
+        return exclude
+
     def get_fields(self, request, obj=None):
         """
         If the user has only the view permission return these readonly fields
@@ -100,10 +119,14 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         if ((self.has_view_permission(request, obj) and (
             obj and not self.has_change_permission(request, obj, True))) or (
                 obj is None and not self.has_add_permission(request))):
-            fields = super(AdminViewPermissionBaseModelAdmin, self).get_fields(
-                request, obj)
+            fields = super(
+                AdminViewPermissionBaseModelAdmin,
+                self).get_fields(request, obj)
+            excluded_fields = self.get_excluded_fields()
             readonly_fields = self.get_readonly_fields(request, obj)
-            new_fields = [i for i in fields if i in readonly_fields]
+            new_fields = [i for i in fields if
+                          i in readonly_fields and
+                          i not in excluded_fields]
             return new_fields
         else:
             return super(AdminViewPermissionBaseModelAdmin, self).get_fields(

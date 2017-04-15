@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django import forms
 from django.contrib import admin
 
 from admin_view_permission import admin as view_admin
@@ -52,6 +53,16 @@ class ModelAdmin2(view_admin.AdminViewPermissionModelAdmin):
         InlineModelAdmin1,
         InlineModelAdmin2
     ]
+
+
+class TestModel1Form(forms.ModelForm):
+    class Meta:
+        model = TestModel1
+        exclude = ['var4']
+
+
+class ModelAdmin1WithFormExclude(view_admin.AdminViewPermissionModelAdmin):
+    form = TestModel1Form
 
 
 admin.site.register(TestModel1, DefaultModelAdmin)

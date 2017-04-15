@@ -230,6 +230,59 @@ class TestAdminViewPermissionBaseModelAdmin(AdminViewPermissionTestCase):
 
         assert fields == ['var1', 'var2', 'var3', 'var4']
 
+    # test excluded fields
+    def test_get_fields_excluded_simple_user_1(self):
+        # View permission only
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        self.modeladmin_testmodel1.exclude = ['var4']
+        fields = self.modeladmin_testmodel1.get_fields(
+            self.django_request(simple_user))
+
+        assert fields == ['var1', 'var2', 'var3']
+
+    def test_get_fields_excluded_simple_user_2(self):
+        # View permission only
+        simple_user = self.create_simple_user()
+        simple_user.user_permissions.add(self.view_permission_testmodel1)
+        self.modeladmin_testmodel1.exclude = ['var4']
+        fields = self.modeladmin_testmodel1.get_fields(
+            self.django_request(simple_user), self.object_testmodel1)
+
+        assert fields == ['var1', 'var2', 'var3']
+
+    def test_get_fields_excluded_super_user_1(self):
+        super_user = self.create_super_user()
+        self.modeladmin_testmodel1.exclude = ['var4']
+        fields = self.modeladmin_testmodel1.get_fields(
+            self.django_request(super_user))
+
+        assert fields == ['var1', 'var2', 'var3']
+
+    def test_get_fields_excluded_super_user_2(self):
+        super_user = self.create_super_user()
+        self.modeladmin_testmodel1.exclude = ['var4']
+        fields = self.modeladmin_testmodel1.get_fields(
+            self.django_request(super_user), self.object_testmodel1)
+
+        assert fields == ['var1', 'var2', 'var3']
+
+    def test_get_fields_excluded_model_form_super_user(self):
+        super_user = self.create_super_user()
+        fields = self.modeladmin_testmodel1_with_form_exclude.get_fields(
+            self.django_request(super_user), self.object_testmodel1)
+
+        assert fields == ['var1', 'var2', 'var3']
+
+    def test_get_fields_excluded_model_form_and_admin_exclude_super_user(self):
+        super_user = self.create_super_user()
+        # should override the form exclude when explicitly set on the
+        # admin exclude
+        self.modeladmin_testmodel1_with_form_exclude.exclude = ['var3']
+        fields = self.modeladmin_testmodel1_with_form_exclude.get_fields(
+            self.django_request(super_user), self.object_testmodel1)
+        assert fields == ['var1', 'var2', 'var4']
+
     # get_actions
 
     def test_get_actions_simple_user_1(self):

@@ -9,6 +9,7 @@ from .test_app.admin import (
     InlineModelAdmin1,
     InlineModelAdmin2,
     ModelAdmin1,
+    ModelAdmin1WithFormExclude,
     ModelAdmin2,
 )
 from .test_app.models import (
@@ -112,6 +113,8 @@ class AdminViewPermissionTestCase(BaseTestCase):
         # TestModel1 to have as a ModelAdmin the ModelAdmin1 via the
         # assigned_modeladmin attr. In the other tests we have to change them)
         self.modeladmin_testmodel1 = ModelAdmin1(TestModel1, admin.site)
+        self.modeladmin_testmodel1_with_form_exclude = \
+            ModelAdmin1WithFormExclude(TestModel1, admin.site)
         self.modeladmin_testmodel5 = ModelAdmin1(TestModel5, admin.site)
 
 
