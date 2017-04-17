@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.admin.options import TO_FIELD_VAR
 from django.contrib.admin.templatetags.admin_modify import \
     submit_row as original_submit_row
 from django.contrib.admin.templatetags.admin_modify import register
@@ -35,6 +36,7 @@ def submit_row(context):
 
 
 class AdminViewPermissionChangeList(ChangeList):
+
     def __init__(self, *args, **kwargs):
         super(AdminViewPermissionChangeList, self).__init__(*args, **kwargs)
         # TODO: Exam if is None
@@ -53,6 +55,7 @@ class AdminViewPermissionChangeList(ChangeList):
 
 
 class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
+
     def get_model_perms(self, request):
         """
         Returns a dict of all perms for this model. This dict has the keys
@@ -152,7 +155,7 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                  if field.editable]
             )
 
-            # Try to remove id if user have not specify fields and
+            # Try to remove id if user has not specified fields and
             # readonly fields
             try:
                 readonly_fields.remove('id')
@@ -162,6 +165,14 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
             if self.fields:
                 # Set as readonly fields the specified fields
                 readonly_fields = self.fields
+
+            # Remove from the readonly_fields list the excluded fields
+            # specified on the form or the modeladmin
+            excluded_fields = self.get_excluded_fields()
+            if excluded_fields:
+                readonly_fields = [
+                    f for f in readonly_fields if f not in excluded_fields
+                ]
 
         return tuple(readonly_fields)
 
@@ -247,13 +258,15 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
         Override this function to hide the sumbit row from the user who has
         view only permission
         """
+        to_field = request.POST.get(
+            TO_FIELD_VAR, request.GET.get(TO_FIELD_VAR)
+        )
         model = self.model
         opts = model._meta
 
-        if object_id:
-            obj = None
-        else:
-            obj = self.get_object(request, unquote(object_id))
+        # TODO: Overriding the change_view costs 1 query more (one from us
+        # and another from the super)
+        obj = self.get_object(request, unquote(object_id), to_field)
 
         if self.has_view_permission(request, obj) and \
                 not self.has_change_permission(request, obj, True):
@@ -267,7 +280,8 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
 
             inlines = self.get_inline_instances(request, obj)
             for inline in inlines:
-                if inline.has_change_permission(request, obj, True):
+                if (inline.has_change_permission(request, obj, True) or
+                        inline.has_add_permission(request)):
                     extra_context['show_save'] = True
                     extra_context['show_save_and_continue'] = True
                     break

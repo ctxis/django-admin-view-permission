@@ -10,6 +10,7 @@ class TestTestAppModelAdminOverride(SimpleTestCase):
 
     def test_testapp_modeladmin_override_1(self):
         for model in admin.site._registry:
-            assert isinstance(admin.site._registry[model],
-                              AdminViewPermissionModelAdmin)
-            assert isinstance(admin.site._registry[model], admin.ModelAdmin)
+            assert isinstance(
+                admin.site._registry[model], AdminViewPermissionModelAdmin)
+            assert isinstance(
+                admin.site._registry[model], admin.ModelAdmin)
