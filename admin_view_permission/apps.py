@@ -7,8 +7,7 @@ from django.contrib import admin
 from django.db.models.signals import post_migrate
 
 from .admin import AdminViewPermissionAdminSite
-from .enums import DjangoVersion
-from .utils import django_version
+from .utils import get_model_name
 
 
 def update_permissions(sender, app_config, verbosity, apps=global_apps,
@@ -21,13 +20,7 @@ def update_permissions(sender, app_config, verbosity, apps=global_apps,
             view_permission = 'view_%s' % model._meta.model_name
             if settings_models or (settings_models is not None and len(
                     settings_models) == 0):
-
-                if django_version() == DjangoVersion.DJANGO_18:
-                    model_name = '%s.%s' % (model._meta.app_label,
-                                            model._meta.object_name)
-                elif django_version() > DjangoVersion.DJANGO_18:
-                    model_name = model._meta.label
-
+                model_name = get_model_name(model)
                 if model_name in settings_models and view_permission not in \
                         [perm[0] for perm in model._meta.permissions]:
                     model._meta.permissions += (

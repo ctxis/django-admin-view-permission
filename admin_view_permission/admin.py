@@ -16,8 +16,7 @@ from django.utils.encoding import force_text
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 
-from .enums import DjangoVersion
-from .utils import django_version
+from .utils import get_model_name
 
 
 @register.inclusion_tag('admin/submit_line.html', takes_context=True)
@@ -306,12 +305,7 @@ class AdminViewPermissionAdminSite(admin.AdminSite):
         if SETTINGS_MODELS or (SETTINGS_MODELS is not None and len(
                 SETTINGS_MODELS) == 0):
             for model in models:
-                if django_version() == DjangoVersion.DJANGO_18:
-                    model_name = '%s.%s' % (model._meta.app_label,
-                                            model._meta.object_name)
-                elif django_version() > DjangoVersion.DJANGO_18:
-                    model_name = model._meta.label
-
+                model_name = get_model_name(model)
                 if model_name in SETTINGS_MODELS:
                     if admin_class:
                         admin_class = type(
