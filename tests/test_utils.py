@@ -3,9 +3,7 @@ from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from admin_view_permission.enums import DjangoVersion
-from admin_view_permission.utils import django_version, get_model_name
-
-from .test_app.models import TestModel1
+from admin_view_permission.utils import django_version
 
 try:
     from unittest.mock import patch
@@ -31,10 +29,10 @@ class TestUtils(SimpleTestCase):
     def test_django_version_with_django_111(self):
         assert django_version() == DjangoVersion.DJANGO_111
 
-    @patch('django.get_version', lambda: '1.8')
-    def test_get_model_name_with_django_18(self):
-        assert get_model_name(TestModel1) == 'test_app.TestModel1'
-
-    @patch('django.get_version', lambda: '1.9')
-    def test_get_model_name_with_django_bigger_than_18(self):
-        assert get_model_name(TestModel1) == 'test_app.TestModel1'
+    # @patch('django.get_version', lambda: '1.8')
+    # def test_get_model_name_with_django_18(self):
+    #     assert get_model_name(TestModel1) == 'test_app.TestModel1'
+    #
+    # @patch('django.get_version', lambda: '1.9')
+    # def test_get_model_name_with_django_bigger_than_18(self):
+    #     assert get_model_name(TestModel1) == 'test_app.TestModel1'
