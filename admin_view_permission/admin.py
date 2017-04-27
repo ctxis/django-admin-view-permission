@@ -47,8 +47,8 @@ class AdminViewPermissionChangeList(ChangeList):
         # If user has only view permission change the title of the changelist
         # view
         if self.model_admin.has_view_permission(self.request) and \
-                not self.model_admin.has_change_permission(self.request,
-                                                           only_change=True):
+                not self.model_admin.has_change_permission_only_change(
+                    self.request):
             if self.is_popup:
                 title = _('Select %s')
             else:
@@ -79,7 +79,7 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         codename = get_permission_codename('view', opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
-    def has_change_permission(self, request, obj=None, only_change=False):
+    def has_change_permission(self, request, obj=None):
         """
         Override this method in order to return True whenever a user has view
         permission and avoid re-implementing the change_view and
@@ -88,13 +88,15 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         """
         change_permission = super(AdminViewPermissionBaseModelAdmin,
                                   self).has_change_permission(request, obj)
-        if only_change:
-            return change_permission
+        if change_permission or self.has_view_permission(request, obj):
+            return True
         else:
-            if change_permission or self.has_view_permission(request, obj):
-                return True
-            else:
-                return change_permission
+            return change_permission
+
+    def has_change_permission_only_change(self, request, obj=None):
+        change_permission = super(AdminViewPermissionBaseModelAdmin,
+                                  self).has_change_permission(request, obj)
+        return change_permission
 
     def get_excluded_fields(self):
         """
@@ -121,7 +123,8 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         which are in fields attr
         """
         if ((self.has_view_permission(request, obj) and (
-            obj and not self.has_change_permission(request, obj, True))) or (
+            obj and
+                not self.has_change_permission_only_change(request, obj))) or (
                 obj is None and not self.has_add_permission(request))):
             fields = super(
                 AdminViewPermissionBaseModelAdmin,
@@ -147,7 +150,8 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                                 self).get_readonly_fields(request, obj)
 
         if ((self.has_view_permission(request, obj) and (
-            obj and not self.has_change_permission(request, obj, True))) or (
+            obj and
+                not self.has_change_permission_only_change(request, obj))) or (
                 obj is None and not self.has_add_permission(request))):
             readonly_fields = (
                 list(readonly_fields) +
@@ -186,7 +190,7 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
             request)
 
         if self.has_view_permission(request) and \
-                not self.has_change_permission(request, only_change=True):
+                not self.has_change_permission_only_change(request):
             # If the user doesn't have delete permission return an empty
             # OrderDict otherwise return only the default admin_site actions
             if not self.has_delete_permission(request):
@@ -209,7 +213,7 @@ class AdminViewPermissionInlineModelAdmin(AdminViewPermissionBaseModelAdmin,
         admin site. This is used by changelist_view.
         """
         if self.has_view_permission(request) and \
-                not self.has_change_permission(request, None, True):
+                not self.has_change_permission_only_change(request, None):
             return super(AdminViewPermissionInlineModelAdmin, self)\
                 .get_queryset(request)
         else:
@@ -240,11 +244,13 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
             if request:
                 if not (inline.has_view_permission(request, obj) or
                         inline.has_add_permission(request) or
-                        inline.has_change_permission(request, obj, True) or
+                        inline.has_change_permission_only_change(
+                            request, obj) or
                         inline.has_delete_permission(request, obj)):
                     continue
                 if inline.has_view_permission(request, obj) and \
-                        not inline.has_change_permission(request, obj, True):
+                        not inline.has_change_permission_only_change(
+                            request, obj):
                     inline.can_delete = False
                 if not inline.has_add_permission(request):
                     inline.max_num = 0
@@ -268,7 +274,7 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
         obj = self.get_object(request, unquote(object_id), to_field)
 
         if self.has_view_permission(request, obj) and \
-                not self.has_change_permission(request, obj, True):
+                not self.has_change_permission_only_change(request, obj):
             extra_context = extra_context or {}
             extra_context['title'] = _('View %s') % force_text(
                 opts.verbose_name)
@@ -280,7 +286,7 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
 
             inlines = self.get_inline_instances(request, obj)
             for inline in inlines:
-                if (inline.has_change_permission(request, obj, True) or
+                if (inline.has_change_permission_only_change(request, obj) or
                         inline.has_add_permission(request)):
                     extra_context['show_save'] = True
                     extra_context['show_save_and_continue'] = True
@@ -293,7 +299,7 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
         resp = super(AdminViewPermissionModelAdmin, self).changelist_view(
             request, extra_context)
         if self.has_view_permission(request) and \
-                not self.has_change_permission(request, only_change=True):
+                not self.has_change_permission_only_change(request):
             resp.context_data['cl'].formset = None
 
         return resp
