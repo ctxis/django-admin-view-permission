@@ -1,4 +1,5 @@
 import copy
+
 from django.apps import apps
 from django.contrib.auth.management import _get_all_permissions
 from django.contrib.auth.models import Permission
