@@ -148,9 +148,9 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                 obj is None and not self.has_add_permission(request))):
             readonly_fields = (
                 list(readonly_fields) +
-                [field.name for field in self.opts.local_fields
+                [field.name for field in self.opts.fields
                  if field.editable] +
-                [field.name for field in self.opts.local_many_to_many
+                [field.name for field in self.opts.many_to_many
                  if field.editable]
             )
 
