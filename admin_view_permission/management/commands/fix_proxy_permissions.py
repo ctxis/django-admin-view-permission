@@ -1,3 +1,4 @@
+import copy
 from django.apps import apps
 from django.contrib.auth.management import _get_all_permissions
 from django.contrib.auth.models import Permission
@@ -19,6 +20,11 @@ class Command(BaseCommand):
     help = "Fix permissions for proxy models."
 
     def handle(self, *args, **options):
+        # We need to execute the post migration callback manually in order
+        # to append the view permission on the proxy model. Then the following
+        # script will create the appropriate content type and move the
+        # permissions under this. If we don't call the callback the script
+        # will create only the basic permissions (add, change, delete)
         update_permissions(
             apps.get_app_config('admin_view_permission'),
             apps.get_app_config('admin_view_permission'),
@@ -35,10 +41,28 @@ class Command(BaseCommand):
             )
 
             for codename, name in _get_all_permissions(opts):
-                p, created = Permission.objects.get_or_create(
+                perm, created = Permission.objects.get_or_create(
                     codename=codename,
                     content_type=ctype,
                     defaults={'name': name},
                 )
                 if created:
-                    self.stdout.write('Adding permission {}\n'.format(p))
+                    self.delete_parent_perms(perm)
+                    self.stdout.write('Adding permission {}\n'.format(perm))
+
+    def delete_parent_perms(self, perm):
+        # Try to delete the permission attached to the parent model
+        # if exists
+        parent_perms = Permission.objects.filter(
+            codename=perm.codename,
+        ).exclude(
+            content_type__app_label=perm.content_type.app_label,
+        )
+
+        if parent_perms.exists():
+            copied_parent_perms = list(copy.deepcopy(parent_perms))
+            delete = parent_perms.delete()
+            if delete[0] == len(copied_parent_perms):
+                for parent_perm in copied_parent_perms:
+                    self.stdout.write('Delete permission {}\n'.format(
+                        parent_perm))
