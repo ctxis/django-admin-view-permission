@@ -7,7 +7,7 @@ from django.contrib.admin.options import TO_FIELD_VAR
 from django.contrib.admin.templatetags.admin_modify import \
     submit_row as original_submit_row
 from django.contrib.admin.templatetags.admin_modify import register
-from django.contrib.admin.utils import unquote
+from django.contrib.admin.utils import unquote, flatten
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import PermissionDenied
@@ -15,7 +15,6 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
-from django.contrib.admin.utils import flatten
 
 from .utils import get_model_name
 
@@ -131,7 +130,8 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
             new_fields = []
             for field in fields:
                 if isinstance(field, tuple):
-                    if all([True if subfield in readonly_fields else False for subfield in field]) and field not in excluded_fields:
+                    if all([True if subfield in readonly_fields else False for subfield in
+                            field]) and field not in excluded_fields:
                         new_fields.append(field)
                 else:
                     if field in readonly_fields and field not in excluded_fields:
