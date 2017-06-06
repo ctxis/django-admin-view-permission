@@ -15,6 +15,7 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
+from django.contrib.admin.utils import flatten
 
 from .utils import get_model_name
 
@@ -126,9 +127,15 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                 self).get_fields(request, obj)
             excluded_fields = self.get_excluded_fields()
             readonly_fields = self.get_readonly_fields(request, obj)
-            new_fields = [i for i in fields if
-                          i in readonly_fields and
-                          i not in excluded_fields]
+
+            new_fields = []
+            for field in fields:
+                if isinstance(field, tuple):
+                    if all([True if subfield in readonly_fields else False for subfield in field]) and field not in excluded_fields:
+                        new_fields.append(field)
+                else:
+                    if field in readonly_fields and field not in excluded_fields:
+                        new_fields.append(field)
             return new_fields
         else:
             return super(AdminViewPermissionBaseModelAdmin, self).get_fields(
@@ -163,7 +170,7 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
 
             if self.fields:
                 # Set as readonly fields the specified fields
-                readonly_fields = self.fields
+                readonly_fields = flatten(self.fields)
 
             # Remove from the readonly_fields list the excluded fields
             # specified on the form or the modeladmin
