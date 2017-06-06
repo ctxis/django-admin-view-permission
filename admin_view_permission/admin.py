@@ -181,7 +181,7 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         """
         if self.has_view_permission(request) and \
                 not self.has_change_permission(request, only_change=True):
-            return None
+            return []
         else:
             return super(AdminViewPermissionBaseModelAdmin, self).get_actions(
                 request)
