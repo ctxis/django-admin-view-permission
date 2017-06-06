@@ -822,7 +822,7 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             name='add_from_a_simple_user_with_view_permission',
             request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: x is None},
+            result={'get_actions': lambda x: x == []},
         ),
         ActionParams(
             name='add_from_a_simple_user_with_change_permission',
@@ -840,7 +840,7 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             name='add_from_a_simple_user_with_add_view_permission',
             request_user=RequestUser('user_with_av_perm_on_model1', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: x is None},
+            result={'get_actions': lambda x: x == []},
         ),
         ActionParams(
             name='add_from_a_simple_user_with_change_view_permission',
@@ -852,7 +852,7 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             name='add_from_a_simple_user_with_delete_view_permission',
             request_user=RequestUser('user_with_dv_perm_on_model1', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: x is None},
+            result={'get_actions': lambda x: x == []},
         ),
         ActionParams(
             name='add_from_a_simple_user_with_add_view_change_permission',
