@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from collections import OrderedDict
+
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
@@ -179,12 +181,23 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         """
         Override this funciton to remove the actions from the changelist view
         """
+        actions = super(AdminViewPermissionBaseModelAdmin, self).get_actions(
+            request)
+
         if self.has_view_permission(request) and \
                 not self.has_change_permission(request, only_change=True):
-            return []
-        else:
-            return super(AdminViewPermissionBaseModelAdmin, self).get_actions(
-                request)
+            # If the user doesn't have delete permission return an empty
+            # OrderDict otherwise return only the default admin_site actions
+            if not self.has_delete_permission(request):
+                return OrderedDict()
+            else:
+                return OrderedDict(
+                    (name, (func, name, desc))
+                    for func, name, desc in actions.values()
+                    if name in dict(self.admin_site.actions).keys()
+                )
+
+        return actions
 
 
 class AdminViewPermissionInlineModelAdmin(AdminViewPermissionBaseModelAdmin,
