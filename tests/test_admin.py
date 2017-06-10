@@ -265,7 +265,7 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
             obj_func=None,
             obj_params={},
-            modeladmin_func=_modeladmin_with_property_on_fields,
+            modeladmin_func=_modeladmin_with_tuple_as_fields,
             result={
                 'get_readonly_fields': ('var1', 'var2', 'var3', 'var4', 'var5',
                                         'var6'),
@@ -520,6 +520,24 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             obj_func=_obj_simple,
             obj_params={},
             modeladmin_func=_modeladmin_with_property_on_fields,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4', 'var5',
+                                        'var6'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4', 'var5', 'var6'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='change_from_a_simple_user_with_view_permission_and_tuple_as'
+                 'fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'change'),
+            obj_func=_obj_simple,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_tuple_as_fields,
             result={
                 'get_readonly_fields': ('var1', 'var2', 'var3', 'var4', 'var5',
                                         'var6'),
