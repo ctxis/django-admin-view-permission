@@ -1,12 +1,12 @@
 import copy
 
 from django.apps import apps
-from django.contrib.auth.management import _get_all_permissions
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 
 from admin_view_permission.apps import update_permissions
+from admin_view_permission.utils import get_all_permissions
 
 
 class Command(BaseCommand):
@@ -41,7 +41,7 @@ class Command(BaseCommand):
                 model=opts.object_name.lower(),
             )
 
-            for codename, name in _get_all_permissions(opts):
+            for codename, name in get_all_permissions(opts, ctype):
                 perm, created = Permission.objects.get_or_create(
                     codename=codename,
                     content_type=ctype,
@@ -62,8 +62,6 @@ class Command(BaseCommand):
 
         if parent_perms.exists():
             copied_parent_perms = list(copy.deepcopy(parent_perms))
-            delete = parent_perms.delete()
-            if delete[0] == len(copied_parent_perms):
-                for parent_perm in copied_parent_perms:
-                    self.stdout.write('Delete permission {}\n'.format(
-                        parent_perm))
+            parent_perms.delete()
+            for parent_perm in copied_parent_perms:
+                self.stdout.write('Delete permission {}\n'.format(parent_perm))
