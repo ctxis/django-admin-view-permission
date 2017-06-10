@@ -9,7 +9,7 @@ from django.contrib.admin.options import TO_FIELD_VAR
 from django.contrib.admin.templatetags.admin_modify import \
     submit_row as original_submit_row
 from django.contrib.admin.templatetags.admin_modify import register
-from django.contrib.admin.utils import unquote, flatten
+from django.contrib.admin.utils import flatten, unquote
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import PermissionDenied
@@ -128,16 +128,10 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                 self).get_fields(request, obj)
             excluded_fields = self.get_excluded_fields()
             readonly_fields = self.get_readonly_fields(request, obj)
+            new_fields = [i for i in flatten(fields) if
+                          i in readonly_fields and
+                          i not in excluded_fields]
 
-            new_fields = []
-            for field in fields:
-                if isinstance(field, tuple):
-                    if all([True if subfield in readonly_fields else False for subfield in
-                            field]) and field not in excluded_fields:
-                        new_fields.append(field)
-                else:
-                    if field in readonly_fields and field not in excluded_fields:
-                        new_fields.append(field)
             return new_fields
         else:
             return super(AdminViewPermissionBaseModelAdmin, self).get_fields(
