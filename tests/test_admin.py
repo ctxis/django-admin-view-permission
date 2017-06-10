@@ -133,6 +133,13 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
 
         return modeladmin
 
+    def _modeladmin_with_tuple_as_fields(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, ModelAdmin1)
+        modeladmin.fields = (('var1', 'var2'), 'var3', 'var4', 'var5', 'var6')
+
+        return modeladmin
+
     def _modeladmin_with_form_containing_exclude_fields(self):
 
         class TestModel1Form(forms.ModelForm):
@@ -236,6 +243,24 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
         # the readonly_fields option
         GeneralParams(
             name='add_from_a_simple_user_with_view_permission_and_property_on'
+                 '_fields',
+            request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
+            obj_func=None,
+            obj_params={},
+            modeladmin_func=_modeladmin_with_property_on_fields,
+            result={
+                'get_readonly_fields': ('var1', 'var2', 'var3', 'var4', 'var5',
+                                        'var6'),
+                'get_fields': ['var1', 'var2', 'var3', 'var4', 'var5', 'var6'],
+                'has_view_permission': True,
+                'has_change_permission': {
+                    'default': True,
+                    'change_only': False,
+                },
+            }
+        ),
+        GeneralParams(
+            name='add_from_a_simple_user_with_view_permission_and_tuple_as'
                  '_fields',
             request_user=RequestUser('user_with_v_perm_on_model1', 'add'),
             obj_func=None,
