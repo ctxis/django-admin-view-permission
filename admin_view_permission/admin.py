@@ -302,6 +302,15 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
         return super(AdminViewPermissionModelAdmin, self).change_view(
             request, object_id, form_url, extra_context)
 
+    def changelist_view(self, request, extra_context=None):
+        resp = super(AdminViewPermissionModelAdmin, self).changelist_view(
+            request, extra_context)
+        if self.has_view_permission(request) and \
+                not self.has_change_permission(request, only_change=True):
+            resp.context_data['cl'].formset = None
+
+        return resp
+
 
 class AdminViewPermissionAdminSite(admin.AdminSite):
     def register(self, model_or_iterable, admin_class=None, **options):
