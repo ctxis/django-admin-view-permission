@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.core.urlresolvers import reverse
 from model_mommy import mommy
 
-from .helpers import AdminViewPermissionViewsTestCase
+from tests.tests.helpers import AdminViewPermissionViewsTestCase
 
 
 class TestModelAdminViews(AdminViewPermissionViewsTestCase):

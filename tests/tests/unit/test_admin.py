@@ -21,14 +21,14 @@ from admin_view_permission.admin import (
     AdminViewPermissionModelAdmin,
 )
 
-from .helpers import (
+from tests.tests.helpers import (
     DataMixin,
     create_simple_user,
     create_super_user,
     create_urlconf,
 )
-from .test_app.admin import ModelAdmin1
-from .test_app.models import TestModel1, TestModel5
+from tests.test_app.admin import ModelAdmin1
+from tests.test_app.models import TestModel1, TestModel5
 
 try:
     from django.urls import reverse
