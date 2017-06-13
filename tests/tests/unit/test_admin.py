@@ -1624,12 +1624,12 @@ class TestAdminViewPermissionAdminSite(SimpleTestCase):
     def setUp(self):
         self.admin_site = AdminViewPermissionAdminSite('admin')
 
-    def test_register_1(self):
+    def test_register__1(self):
         self.admin_site.register(TestModel1)
         assert isinstance(self.admin_site._registry[TestModel1],
                           AdminViewPermissionModelAdmin)
 
-    def test_register_2(self):
+    def test_register__2(self):
         modeladmin1 = type(str('TestModelAdmin1'), (admin.ModelAdmin, ), {})
         self.admin_site.register(TestModel1, modeladmin1)
         assert isinstance(self.admin_site._registry[TestModel1],
@@ -1638,13 +1638,13 @@ class TestAdminViewPermissionAdminSite(SimpleTestCase):
                           modeladmin1)
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=['test_app.TestModel1', ])
-    def test_register_3(self):
+    def test_register__3(self):
         self.admin_site.register(TestModel1)
         assert isinstance(self.admin_site._registry[TestModel1],
                           AdminViewPermissionModelAdmin)
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=['test_app.TestModel1', ])
-    def test_register_4(self):
+    def test_register__4(self):
         modeladmin1 = type(str('TestModelAdmin1'), (admin.ModelAdmin, ), {})
         self.admin_site.register(TestModel1, modeladmin1)
         assert isinstance(self.admin_site._registry[TestModel1],
@@ -1653,13 +1653,13 @@ class TestAdminViewPermissionAdminSite(SimpleTestCase):
                           modeladmin1)
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=[])
-    def test_register_5(self):
+    def test_register__5(self):
         self.admin_site.register(TestModel1)
         assert not isinstance(self.admin_site._registry[TestModel1],
                               AdminViewPermissionModelAdmin)
 
     @override_settings(ADMIN_VIEW_PERMISSION_MODELS=())
-    def test_register_6(self):
+    def test_register__6(self):
         self.admin_site.register(TestModel1)
         assert not isinstance(self.admin_site._registry[TestModel1],
                               AdminViewPermissionModelAdmin)

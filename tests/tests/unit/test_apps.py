@@ -30,7 +30,7 @@ class TestAdminViewPermissionConfig(TestCase):
         self.model3 = type(str('AppTestModel3'), (models.Model, ),
                            attrs_2.copy())
 
-    def trigger_signal(self):
+    def _trigger_signal(self):
         post_migrate.send(
             sender=self.appconfig,
             app_config=self.appconfig,
@@ -41,8 +41,8 @@ class TestAdminViewPermissionConfig(TestCase):
     @override_settings(
         ADMIN_VIEW_PERMISSION_MODELS=['test_app.AppTestModel1', ]
     )
-    def test_ready_with_one_model(self):
-        self.trigger_signal()
+    def test_ready__with_one_model(self):
+        self._trigger_signal()
         self.assertEqual(self.model1._meta.permissions,
                          [('view_apptestmodel1', 'Can view apptestmodel1'), ])
         self.assertEqual(self.model2._meta.permissions, [])
@@ -50,24 +50,24 @@ class TestAdminViewPermissionConfig(TestCase):
     @override_settings(
         ADMIN_VIEW_PERMISSION_MODELS=[]
     )
-    def test_ready_without_model_list(self):
-        self.trigger_signal()
+    def test_ready__without_model_list(self):
+        self._trigger_signal()
         self.assertEqual(self.model1._meta.permissions, [])
         self.assertEqual(self.model2._meta.permissions, [])
 
     @override_settings(
         ADMIN_VIEW_PERMISSION_MODELS=()
     )
-    def test_ready_without_model_tuple(self):
-        self.trigger_signal()
+    def test_ready__without_model_tuple(self):
+        self._trigger_signal()
         self.assertEqual(self.model1._meta.permissions, [])
         self.assertEqual(self.model2._meta.permissions, [])
 
     @override_settings(
         ADMIN_VIEW_PERMISSION_MODELS=None
     )
-    def test_ready_with_none(self):
-        self.trigger_signal()
+    def test_ready__with_none(self):
+        self._trigger_signal()
         self.assertEqual(self.model1._meta.permissions,
                          [('view_apptestmodel1', 'Can view apptestmodel1'), ])
         self.assertEqual(self.model2._meta.permissions,
@@ -76,8 +76,8 @@ class TestAdminViewPermissionConfig(TestCase):
     @override_settings(
         ADMIN_VIEW_PERMISSION_MODELS=['test_app.AppTestModel3', ]
     )
-    def test_ready_with_other_permissions(self):
-        self.trigger_signal()
+    def test_ready__with_other_permissions(self):
+        self._trigger_signal()
         self.assertEqual(self.model3._meta.permissions,
                          ((u'copy_apptestmodel3', u'Can copy apptestmodel3'),
                           (u'view_apptestmodel3', u'Can view apptestmodel3')))
@@ -85,8 +85,8 @@ class TestAdminViewPermissionConfig(TestCase):
     @override_settings(
         ADMIN_VIEW_PERMISSION_MODELS=[]
     )
-    def test_ready_with_other_permissions_and_with_none(self):
-        self.trigger_signal()
+    def test_ready__with_other_permissions_and_with_none(self):
+        self._trigger_signal()
         self.assertEqual(
             self.model3._meta.permissions,
             ((u'copy_apptestmodel3', u'Can copy apptestmodel3'), )

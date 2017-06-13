@@ -8,7 +8,7 @@ from admin_view_permission.admin import AdminViewPermissionModelAdmin
 
 class TestTestAppModelAdminOverride(SimpleTestCase):
 
-    def test_testapp_modeladmin_override_1(self):
+    def test_testapp_modeladmin_override(self):
         for model in admin.site._registry:
             assert isinstance(
                 admin.site._registry[model], AdminViewPermissionModelAdmin)

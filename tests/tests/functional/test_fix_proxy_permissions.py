@@ -26,7 +26,7 @@ class TestFixProxyPermission(TestCase):
         cls.proxy_model = type(str('AppTestProxyModel'), (User, ),
                                attrs.copy())
 
-    def test_fix_proxy_permissions__without_command_and_migration(self):
+    def test_fix_proxy_permissions_without_command_and_migration(self):
         model = self.proxy_model._meta.model_name
         ctypes = ContentType.objects.filter(model=model)
         permissions = Permission.objects.filter(

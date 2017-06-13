@@ -14,19 +14,19 @@ except ImportError:
 class TestUtils(SimpleTestCase):
 
     @patch('django.get_version', lambda: '1.8')
-    def test_django_version_with_django_18(self):
+    def test_django_version__with_django_18(self):
         assert django_version() == DjangoVersion.DJANGO_18
 
     @patch('django.get_version', lambda: '1.9')
-    def test_django_version_with_django_19(self):
+    def test_django_version__with_django_19(self):
         assert django_version() == DjangoVersion.DJANGO_19
 
     @patch('django.get_version', lambda: '1.10')
-    def test_django_version_with_django_110(self):
+    def test_django_version__with_django_110(self):
         assert django_version() == DjangoVersion.DJANGO_110
 
     @patch('django.get_version', lambda: '1.11')
-    def test_django_version_with_django_111(self):
+    def test_django_version__with_django_111(self):
         assert django_version() == DjangoVersion.DJANGO_111
 
     # @patch('django.get_version', lambda: '1.8')
