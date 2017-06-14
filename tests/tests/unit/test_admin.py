@@ -950,6 +950,21 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
             cls.view_permission_model1,
         )
 
+        cls.user_with_av_perm_on_model1 = create_simple_user()
+        cls.user_with_av_perm_on_model1.user_permissions.add(
+            cls.add_permission_model1,
+            cls.view_permission_model1)
+
+        cls.user_with_cv_perm_on_model1 = create_simple_user()
+        cls.user_with_cv_perm_on_model1.user_permissions.add(
+            cls.change_permission_model1,
+            cls.view_permission_model1)
+
+        cls.user_with_dv_perm_on_model1 = create_simple_user()
+        cls.user_with_dv_perm_on_model1.user_permissions.add(
+            cls.delete_permission_model1,
+            cls.view_permission_model1)
+
         cls.user_with_v_perm_on_model1_4 = create_simple_user()
         cls.user_with_v_perm_on_model1_4.user_permissions.add(
             cls.view_permission_model1,
@@ -1036,6 +1051,14 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
         self.admin_site.register(TestModel1, ModelAdmin1)
         modeladmin = ModelAdmin1(TestModel1, self.admin_site)
         modeladmin.fields = ['var1', 'var2', 'var3', 'var4', 'var5', 'var6']
+
+        return modeladmin
+
+    def _modeladmin_with_list_editable(self):
+        self.admin_site.register(TestModel1, ModelAdmin1)
+        modeladmin = ModelAdmin1(TestModel1, self.admin_site)
+        modeladmin.list_display = ['var1', 'var2']
+        modeladmin.list_editable = ['var2']
 
         return modeladmin
 
@@ -1617,6 +1640,47 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
             assert (response.context_data['show_save_and_continue'] ==
                     result['change_view']['context_data'][
                         'show_save_and_continue'])
+
+    @parameterized.expand([
+        ('user_with_v_perm_on_model1', 200, lambda x: x is None),
+        ('super_user', 200, lambda x: x is None),
+    ])
+    def test_changelist_view__without_list_editable(self, user, status_code,
+                                                    cl_formset):
+        modeladmin = self._modeladmin_simple()
+        url = reverse(
+            'test_admin:test_app_testmodel1_changelist',
+            urlconf=create_urlconf(self.admin_site)
+        )
+
+        request = self.factory.get(url)
+        request.user = getattr(self, user)
+        response = modeladmin.changelist_view(request)
+
+        assert response.status_code == status_code
+        assert cl_formset(response.context_data['cl'].formset)
+
+    @parameterized.expand([
+        ('user_with_v_perm_on_model1', 200, lambda x: x is None),
+        ('user_with_av_perm_on_model1', 200, lambda x: x is None),
+        ('user_with_cv_perm_on_model1', 200, lambda x: x is not None),
+        ('user_with_dv_perm_on_model1', 200, lambda x: x is None),
+        ('super_user', 200, lambda x: x is not None),
+    ])
+    def test_changelist_view__with_list_editable(self, user, status_code,
+                                                 cl_formset):
+        modeladmin = self._modeladmin_with_list_editable()
+        url = reverse(
+            'test_admin:test_app_testmodel1_changelist',
+            urlconf=create_urlconf(self.admin_site)
+        )
+
+        request = self.factory.get(url)
+        request.user = getattr(self, user)
+        response = modeladmin.changelist_view(request)
+
+        assert response.status_code == status_code
+        assert cl_formset(response.context_data['cl'].formset)
 
 
 class TestAdminViewPermissionAdminSite(SimpleTestCase):
