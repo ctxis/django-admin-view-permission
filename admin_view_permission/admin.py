@@ -26,6 +26,8 @@ def submit_row(context):
     """submit buttons context change"""
     ctx = original_submit_row(context)
     ctx.update({
+        'show_save_as_new': context.get(
+            'show_save_as_new', ctx['show_save_as_new']),
         'show_save_and_add_another': context.get(
             'show_save_and_add_another', ctx['show_save_and_add_another']),
         'show_save_and_continue': context.get(
@@ -37,7 +39,6 @@ def submit_row(context):
 
 
 class AdminViewPermissionChangeList(ChangeList):
-
     def __init__(self, *args, **kwargs):
         super(AdminViewPermissionChangeList, self).__init__(*args, **kwargs)
         # TODO: Exam if is None
@@ -56,7 +57,6 @@ class AdminViewPermissionChangeList(ChangeList):
 
 
 class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
-
     def get_model_perms(self, request):
         """
         Returns a dict of all perms for this model. This dict has the keys
@@ -290,6 +290,7 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
             extra_context['show_save'] = False
             extra_context['show_save_and_continue'] = False
             extra_context['show_save_and_add_another'] = False
+            extra_context['show_save_as_new'] = False
 
             inlines = self.get_inline_instances(request, obj)
             for inline in inlines:

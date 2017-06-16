@@ -1247,6 +1247,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': False,
                         'show_save_and_continue': False,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1272,6 +1274,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': False,
                         'show_save_and_continue': False,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1302,6 +1306,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': False,
                         'show_save_and_continue': False,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1334,6 +1340,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': True,
                         'show_save_and_continue': True,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1366,6 +1374,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': True,
                         'show_save_and_continue': True,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1400,6 +1410,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': False,
                         'show_save_and_continue': False,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1432,6 +1444,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': True,
                         'show_save_and_continue': True,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1465,6 +1479,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': False,
                         'show_save_and_continue': False,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1499,6 +1515,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': True,
                         'show_save_and_continue': True,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1533,6 +1551,8 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
                         'title': 'View test model1',
                         'show_save': True,
                         'show_save_and_continue': True,
+                        'show_save_and_add_another': False,
+                        'show_save_as_new': False,
                     }
                 },
             }
@@ -1617,6 +1637,7 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
         if not result['change_view']:
             pytest.skip('not a case')
 
+        context_data = result['change_view']['context_data']
         modeladmin = modeladmin_func(self)
         obj = obj_func(self, obj_params) if obj_func else None
         url_args = (obj.pk,) if obj else ()
@@ -1631,15 +1652,19 @@ class TestAdminViewPermissionModelAdmin(DataMixin, TestCase):
         response = modeladmin.change_view(request, str(obj.pk))
 
         assert response.status_code == result['change_view']['status_code']
-        assert (response.context_data['title'] ==
-                result['change_view']['context_data']['title'])
-        if 'show_save' in result['change_view']['context_data']:
+        assert response.context_data['title'] == context_data['title']
+        if 'show_save' in response.context_data:
             assert (response.context_data['show_save'] ==
-                    result['change_view']['context_data']['show_save'])
-        if 'show_save_and_continue' in result['change_view']['context_data']:
+                    context_data['show_save'])
+        if 'show_save_and_continue' in response.context_data:
             assert (response.context_data['show_save_and_continue'] ==
-                    result['change_view']['context_data'][
-                        'show_save_and_continue'])
+                    context_data['show_save_and_continue'])
+        if 'show_save_and_add_another' in response.context_data:
+            assert (response.context_data['show_save_and_add_another'] ==
+                    context_data['show_save_and_add_another'])
+        if 'show_save_as_new' in response.context_data:
+            assert (response.context_data['show_save_as_new'] ==
+                    context_data['show_save_as_new'])
 
     @parameterized.expand([
         ('user_with_v_perm_on_model1', 200, lambda x: x is None),
