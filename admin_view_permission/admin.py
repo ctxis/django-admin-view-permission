@@ -219,23 +219,9 @@ class AdminViewPermissionInlineModelAdmin(AdminViewPermissionBaseModelAdmin,
             return super(AdminViewPermissionInlineModelAdmin, self)\
                 .get_queryset(request)
 
-    '''def has_parent_view_permission(self, request, obj=None):
-        if getattr(self.parent_model, 'assigned_modeladmin', None):
-            parent_modeladmin = self.parent_model.assigned_modeladmin
-            return parent_modeladmin.has_view_permission(request, obj) \
-                   and not parent_modeladmin.has_change_permission(request,
-                                                                   obj, True)
-
-        return False'''
-
 
 class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
                                     admin.ModelAdmin):
-    def __init__(self, model, admin_site):
-        super(AdminViewPermissionModelAdmin, self).__init__(model, admin_site)
-        # Contibute this class to the model
-        setattr(self.model, 'assigned_modeladmin', self)
-
     def get_changelist(self, request, **kwargs):
         """
         Returns the ChangeList class for use on the changelist page.
