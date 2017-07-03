@@ -11,4 +11,4 @@ database::
     permissions.delete()
 
 .. note:: Before delete the permission would be helpful to check if the
-permissions queryset contains only the view permissions and not anything else.
+          permissions queryset contains only the view permissions and not anything else.
