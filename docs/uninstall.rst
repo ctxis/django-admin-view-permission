@@ -10,5 +10,5 @@ database::
     permissions = Permission.objects.filter(codename__startswith='view')
     permissions.delete()
 
-Notice: Before delete the permission would be helpful to check if the
+.. note:: Before delete the permission would be helpful to check if the
 permissions queryset contains only the view permissions and not anything else.
