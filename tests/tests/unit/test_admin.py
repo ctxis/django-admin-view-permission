@@ -831,8 +831,8 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
         request.user = getattr(self, request_user.user)
         has_change_permission_default = modeladmin.has_change_permission(
             request, obj=obj)
-        has_change_permission_only = modeladmin.has_change_permission(
-            request, obj=obj, only_change=True)
+        has_change_permission_only = \
+            modeladmin.has_change_permission_only_change(request, obj=obj)
 
         assert (has_change_permission_default ==
                 result['has_change_permission']['default'])
