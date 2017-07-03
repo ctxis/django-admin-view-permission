@@ -13,6 +13,7 @@ Contents:
 
    installation
    configuration
+   command
    uninstall
 
 
