@@ -10,7 +10,7 @@ fix_proxy_permissions
 This command will create the appropriate entries on the `ContentType` and
 `Permission` models. Then it will delete the permissions, which are created
 from django `migrate` command and are associated with the parent model. More
-information you can find `here <https://code.djangoproject.com/ticket/11154>_`.
+information you can find `here <https://code.djangoproject.com/ticket/11154>`_.
 
 Example
 ~~~~~~~
