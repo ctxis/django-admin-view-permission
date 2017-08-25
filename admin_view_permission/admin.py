@@ -161,6 +161,9 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                      if field.editable]
                 )
 
+                # remove duplicates whilst preserving order
+                readonly_fields = list(OrderedDict.fromkeys(readonly_fields))
+
                 # Try to remove id if user has not specified fields and
                 # readonly fields
                 try:
