@@ -149,24 +149,27 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
         if ((self.has_view_permission(request, obj) and (
             obj and not self._has_change_only_permission(request, obj))) or (
                 obj is None and not self.has_add_permission(request))):
-            readonly_fields = (
-                list(readonly_fields) +
-                [field.name for field in self.opts.fields
-                 if field.editable] +
-                [field.name for field in self.opts.many_to_many
-                 if field.editable]
-            )
-
-            # Try to remove id if user has not specified fields and
-            # readonly fields
-            try:
-                readonly_fields.remove('id')
-            except ValueError:
-                pass
-
             if self.fields:
                 # Set as readonly fields the specified fields
                 readonly_fields = flatten(self.fields)
+            else:
+                readonly_fields = (
+                    list(readonly_fields) +
+                    [field.name for field in self.opts.fields
+                     if field.editable] +
+                    [field.name for field in self.opts.many_to_many
+                     if field.editable]
+                )
+
+                # remove duplicates whilst preserving order
+                readonly_fields = list(OrderedDict.fromkeys(readonly_fields))
+
+                # Try to remove id if user has not specified fields and
+                # readonly fields
+                try:
+                    readonly_fields.remove('id')
+                except ValueError:
+                    pass
 
             # Remove from the readonly_fields list the excluded fields
             # specified on the form or the modeladmin
