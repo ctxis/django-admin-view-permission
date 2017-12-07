@@ -44,8 +44,8 @@ and then add ``admin_view_permission`` at the INSTALLED_APPS like this::
 
 and finally run ``python manage.py migrate``.
 
-> You need to place the ``admin_view_permission`` before
-  ``django.contrib.admin`` in INSTALLED_APPS.
+    | You need to place the ``admin_view_permission`` before
+    | ``django.contrib.admin`` in INSTALLED_APPS.
 
 Configuration
 -------------
