@@ -21,7 +21,7 @@ Requirements
 Support
 -------
 
-* Django: 1.8, 1.9, 1.10, 1.11
+* Django: 1.8, 1.9, 1.10, 1.11, 2.0
 * Python: 2.7, 3.4, 3.5, 3.6
 
 Setup
