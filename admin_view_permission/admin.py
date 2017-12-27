@@ -184,6 +184,13 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                     f for f in readonly_fields if f not in excluded_fields
                 ]
 
+        # Special case for User model
+        if get_model_name(self.model) ==  settings.AUTH_USER_MODEL:
+            try:
+                readonly_fields.remove('password')
+            except ValueError:
+                pass
+
         return tuple(readonly_fields)
 
     def get_actions(self, request):
