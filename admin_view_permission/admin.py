@@ -13,7 +13,11 @@ from django.contrib.admin.utils import flatten, unquote
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import NoReverseMatch, reverse
+try:
+    from django.urls import NoReverseMatch, reverse
+except ImportError:
+    # django < 2.0
+    from django.core.urlresolvers import NoReverseMatch, reverse
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
