@@ -11,7 +11,6 @@ except ImportError:
     from django.core.urlresolvers import reverse
 
 
-
 class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     # admin index

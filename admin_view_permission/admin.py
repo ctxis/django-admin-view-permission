@@ -26,7 +26,6 @@ except ImportError:
     from django.core.urlresolvers import NoReverseMatch, reverse
 
 
-
 @register.inclusion_tag('admin/submit_line.html', takes_context=True)
 def submit_row(context):
     """submit buttons context change"""
