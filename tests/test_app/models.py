@@ -22,21 +22,21 @@ class TestModel1(models.Model):
 
 
 class TestModel2(models.Model):
-    var1 = models.ForeignKey(TestModel1)
+    var1 = models.ForeignKey(TestModel1, on_delete=models.CASCADE)
     var2 = models.CharField(max_length=200)
     var3 = models.TextField()
     var4 = models.IntegerField
 
 
 class TestModel3(models.Model):
-    var1 = models.ForeignKey(TestModel1)
+    var1 = models.ForeignKey(TestModel1, on_delete=models.CASCADE)
     var2 = models.CharField(max_length=200)
     var3 = models.TextField()
     var4 = models.IntegerField()
 
 
 class TestModel4(models.Model):
-    var1 = models.ForeignKey(TestModel1)
+    var1 = models.ForeignKey(TestModel1, on_delete=models.CASCADE)
     var2 = models.CharField(max_length=200)
     var3 = models.TextField()
     var4 = models.IntegerField()
@@ -54,7 +54,7 @@ class TestModel5(models.Model):
 # Copy of the TestModel4 to exam model with different key
 class TestModel6(models.Model):
     var0 = models.AutoField(primary_key=True)
-    var1 = models.ForeignKey(TestModel1)
+    var1 = models.ForeignKey(TestModel1, on_delete=models.CASCADE)
     var2 = models.CharField(max_length=200)
     var3 = models.TextField()
     var4 = models.IntegerField()

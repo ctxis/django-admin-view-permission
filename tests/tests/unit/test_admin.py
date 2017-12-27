@@ -32,6 +32,7 @@ from tests.tests.helpers import (
 try:
     from django.urls import reverse
 except ImportError:
+    # django < 2.0
     from django.core.urlresolvers import reverse
 
 

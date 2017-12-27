@@ -29,6 +29,10 @@ class TestUtils(SimpleTestCase):
     def test_django_version__with_django_111(self):
         assert django_version() == DjangoVersion.DJANGO_111
 
+    @patch('django.get_version', lambda: '2.0')
+    def test_django_version__with_django_20(self):
+        assert django_version() == DjangoVersion.DJANGO_20
+
     # @patch('django.get_version', lambda: '1.8')
     # def test_get_model_name_with_django_18(self):
     #     assert get_model_name(TestModel1) == 'test_app.TestModel1'
