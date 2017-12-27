@@ -16,7 +16,7 @@ else:
 
 setup(
     name='django-admin-view-permission',
-    version='1.2',
+    version='1.3',
     packages=['admin_view_permission'],
     include_package_data=True,
     license='BSD License',
