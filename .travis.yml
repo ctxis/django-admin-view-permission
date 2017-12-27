@@ -22,7 +22,12 @@ env:
 # install dependencies
 install:
   - pip install -r requirements-debug.txt
-  - pip install Django==$DJANGO_VERSION
+  - |
+    if [[ $DJANGO_VERSION =~ ^2.*$ && $TRAVIS_PYTHON_VERSION == "2.7" ]]; then
+      echo "Installing Django 2 in python 2 will fail. Keep the installed one"
+    else
+      pip install Django==$DJANGO_VERSION
+    fi
 
 # print pip packages
 before_script:
