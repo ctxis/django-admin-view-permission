@@ -98,8 +98,8 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                                   self).has_change_permission(request, obj)
         if change_permission or self.has_view_permission(request, obj):
             return True
-        else:
-            return change_permission
+
+        return change_permission
 
     def get_excluded_fields(self):
         """
@@ -302,7 +302,8 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
             request, extra_context)
         if self.has_view_permission(request) and \
                 not self._has_change_only_permission(request):
-            resp.context_data['cl'].formset = None
+            if hasattr(resp, 'context_data') and 'cl' in resp.context_data:
+                resp.context_data['cl'].formset = None
 
         return resp
 

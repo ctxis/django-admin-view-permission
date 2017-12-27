@@ -16,7 +16,10 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
     # admin index
 
     def test_index_view_from_simple_user(self):
-        self.client.login(username='simple_user', password='simple_user')
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.get(reverse('admin:index'))
 
         assert len(response.context['app_list']) == 1
@@ -33,8 +36,11 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     # changeview
 
-    def test_changelist_view_from_simple_user(self):
-        self.client.login(username='simple_user', password='simple_user')
+    def test_changelist_view_get_from_user_with_v_perm_on_model1(self):
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.get(
             reverse('admin:%s_%s_changelist' % ('test_app', 'testmodel1')),
         )
@@ -42,8 +48,43 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
         assert response.status_code == 200
         assert response.context['title'] == 'Select test model1 to view'
 
-    def test_changelist_view_from_simple_user_as_popup(self):
-        self.client.login(username='simple_user', password='simple_user')
+    def test_changelist_view_get_from_user_with_vd_perm_on_model1(self):
+        self.client.login(
+            username='user_with_vd_perm_on_model1',
+            password='simple_user',
+        )
+        response = self.client.get(
+            reverse('admin:%s_%s_changelist' % ('test_app', 'testmodel1')),
+        )
+
+        assert response.status_code == 200
+        assert response.context['title'] == 'Select test model1 to view'
+
+    def test_changelist_view_post_from_user_with_vd_perm_on_model1(self):
+        obj = mommy.make('test_app.TestModel1')
+        data = {
+            'index': ['0'],
+            'action': ['delete_selected'],
+            'select_across': ['0'],
+            '_selected_action': [str(obj.pk)]
+        }
+        self.client.login(
+            username='user_with_vd_perm_on_model1',
+            password='simple_user',
+        )
+        response = self.client.post(
+            reverse('admin:%s_%s_changelist' % ('test_app', 'testmodel1')),
+            data=data,
+        )
+
+        assert response.status_code == 200
+        assert response.context['title'] == 'Are you sure?'
+
+    def test_changelist_view_get_from_simple_user_as_popup(self):
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.get(
             (reverse('admin:%s_%s_changelist' % ('test_app', 'testmodel1')) +
              '?_to_field=id&_popup=1'),
@@ -52,7 +93,7 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
         assert response.status_code == 200
         assert response.context['title'] == 'Select test model1'
 
-    def test_changelist_view_from_super_user(self):
+    def test_changelist_view_get_from_super_user(self):
         self.client.login(username='super_user', password='super_user')
         response = self.client.get(
             reverse('admin:%s_%s_changelist' % ('test_app', 'testmodel1')),
@@ -65,7 +106,10 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     def test_history_view_from_simple_user(self):
         obj = mommy.make('test_app.TestModel1')
-        self.client.login(username='simple_user', password='simple_user')
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.get(
             reverse('admin:%s_%s_history' % ('test_app', 'testmodel1'),
                     args=(obj.pk,)),
@@ -86,7 +130,10 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
     # add
 
     def test_add_view_from_simple_user(self):
-        self.client.login(username='simple_user', password='simple_user')
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.get(
             reverse('admin:%s_%s_add' % ('test_app', 'testmodel1')),
         )
@@ -105,7 +152,10 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     def test_change_view_from_simple_user(self):
         obj = mommy.make('test_app.TestModel1')
-        self.client.login(username='simple_user', password='simple_user')
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.get(
             reverse('admin:%s_%s_change' % ('test_app', 'testmodel1'),
                     args=(obj.pk,)),
@@ -115,7 +165,10 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     def test_change_view_from_simple_user_unauthorized_post(self):
         obj = mommy.make('test_app.TestModel1')
-        self.client.login(username='simple_user', password='simple_user')
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         data = {
             'var1': 'test',
             'var2': 'test',
@@ -152,7 +205,10 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     def test_delete_view_from_simple_user(self):
         obj = mommy.make('test_app.TestModel1')
-        self.client.login(username='simple_user', password='simple_user')
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.get(
             reverse('admin:%s_%s_delete' % ('test_app', 'testmodel1'),
                     args=(obj.pk,)),
@@ -162,7 +218,10 @@ class TestModelAdminViews(AdminViewPermissionViewsTestCase):
 
     def test_delete_view_from_simple_user_unauthorized_post(self):
         obj = mommy.make('test_app.TestModel1')
-        self.client.login(username='simple_user', password='simple_user')
+        self.client.login(
+            username='user_with_v_perm_on_model1',
+            password='simple_user',
+        )
         response = self.client.post(
             reverse('admin:%s_%s_delete' % ('test_app', 'testmodel1'),
                     args=(obj.pk,)),

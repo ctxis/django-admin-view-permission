@@ -97,8 +97,20 @@ class AdminViewPermissionViewsTestCase(DataMixin, TestCase):
     def setUpTestData(cls):
         super(AdminViewPermissionViewsTestCase, cls).setUpTestData()
 
-        cls.simple_user = create_simple_user(username='simple_user')
-        cls.simple_user.user_permissions.add(cls.view_permission_model1)
+        cls.user_with_v_perm_on_model1 = create_simple_user(
+            username='user_with_v_perm_on_model1',
+        )
+        cls.user_with_v_perm_on_model1.user_permissions.add(
+            cls.view_permission_model1,
+        )
+
+        cls.user_with_vd_perm_on_moedl1 = create_simple_user(
+            username='user_with_vd_perm_on_model1',
+        )
+        cls.user_with_vd_perm_on_moedl1.user_permissions.add(
+            cls.view_permission_model1,
+            cls.delete_permission_model1,
+        )
 
         cls.super_user = create_super_user(username='super_user')
 
