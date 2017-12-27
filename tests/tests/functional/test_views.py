@@ -1,13 +1,15 @@
 from __future__ import unicode_literals
 
+from model_mommy import mommy
+
+from tests.tests.helpers import AdminViewPermissionViewsTestCase
+
 try:
     from django.urls import reverse
 except ImportError:
     # django < 2.0
     from django.core.urlresolvers import reverse
-from model_mommy import mommy
 
-from tests.tests.helpers import AdminViewPermissionViewsTestCase
 
 
 class TestModelAdminViews(AdminViewPermissionViewsTestCase):
