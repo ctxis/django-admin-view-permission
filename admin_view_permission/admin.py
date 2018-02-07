@@ -6,9 +6,9 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.options import TO_FIELD_VAR
+from django.contrib.admin.templatetags.admin_modify import register
 from django.contrib.admin.templatetags.admin_modify import \
     submit_row as original_submit_row
-from django.contrib.admin.templatetags.admin_modify import register
 from django.contrib.admin.utils import flatten, unquote
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth import get_permission_codename
