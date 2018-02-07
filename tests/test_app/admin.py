@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
+from parler.admin import TranslatableAdmin
 
 from admin_view_permission import admin as view_admin
 
@@ -24,6 +25,13 @@ class DefaultModelAdmin(admin.ModelAdmin):
 
 
 admin.site.register(TestModel1, DefaultModelAdmin)
+
+
+class TestModelParlerAdmin(TranslatableAdmin, admin.ModelAdmin):
+    model = TestModelParler
+
+
+admin.site.register(TestModelParler, TestModelParlerAdmin)
 
 
 # Modeladmin for testing

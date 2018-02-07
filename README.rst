@@ -25,6 +25,8 @@ Support
 * Django: 1.8, 1.9, 1.10, 1.11, 2.0
 * Python: 2.7, 3.4, 3.5, 3.6
 
+Compatible with `django-parler <https://django-parler.readthedocs.io/>`_'s translatable models. To verify which django-parler version our test suite runs against, check ``requirements-debug.txt``. You do not need django-parler to install django-admin-view-permission.
+
 Documentation
 -------------
 For a full documentation you can visit: http://django-admin-view-permission.readthedocs.org/

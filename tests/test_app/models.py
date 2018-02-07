@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
+from parler.models import TranslatableModel, TranslatedFields
 
 
 class TestModel0(models.Model):
@@ -58,3 +59,18 @@ class TestModel6(models.Model):
     var2 = models.CharField(max_length=200)
     var3 = models.TextField()
     var4 = models.IntegerField()
+
+
+class TestModelParler(TranslatableModel):
+    var1 = models.CharField(max_length=200)
+    var2 = models.TextField()
+    var3 = models.IntegerField()
+
+    translations = TranslatedFields(
+        var4=models.CharField(max_length=20),
+        var5=models.TextField(),
+    )
+
+    @property
+    def var6(self):
+        return 'readonly_field'
