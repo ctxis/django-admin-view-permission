@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
-from django.apps import apps as global_apps
 from django.apps import AppConfig
+from django.apps import apps as global_apps
 from django.conf import settings
 from django.contrib import admin
 from django.db.models.signals import post_migrate
