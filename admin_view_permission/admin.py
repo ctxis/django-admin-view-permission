@@ -315,48 +315,92 @@ class AdminViewPermissionModelAdmin(AdminViewPermissionBaseModelAdmin,
         return resp
 
 
+class AdminViewPermissionUserAdmin(AdminViewPermissionModelAdmin):
+    def user_change_password(self, request, id, form_url=''):
+        if not self._has_change_only_permission(request):
+            raise PermissionDenied
+
+        return super(AdminViewPermissionUserAdmin, self).user_change_password(
+            request, id, form_url)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(AdminViewPermissionUserAdmin, self).get_form(
+            request, obj, **kwargs)
+
+        # TODO: I don't like this at all. Find another way to change the
+        # TODO: help_text
+        if not self._has_change_only_permission(request):
+            form.base_fields['password'].help_text = _(
+                "Raw passwords are not stored, so there is no way to see this "
+                "user's password."
+            )
+        else:
+            form.base_fields['password'].help_text = _(
+                "Raw passwords are not stored, so there is no way to see this "
+                "user's password, but you can change the password using "
+                "<a href=\"../password/\">this form</a>."
+            )
+
+        return form
+
+
 class AdminViewPermissionAdminSite(admin.AdminSite):
+    def _get_admin_class(self, admin_class, is_user_model):
+        if admin_class:
+            if is_user_model:
+                mutable_admin_class_dict = admin_class.__dict__.copy()
+                mutable_admin_class_dict.update({
+                    'user_change_password':
+                        AdminViewPermissionUserAdmin.user_change_password,
+                    'get_form': AdminViewPermissionUserAdmin.get_form,
+                })
+                # The following won't work if someone overrides the
+                # user_change_password view
+                admin_class = type(
+                    str('DynamicAdminViewPermissionModelAdmin'),
+                    (AdminViewPermissionUserAdmin, admin_class),
+                    dict(mutable_admin_class_dict),
+                )
+            else:
+                admin_class = type(
+                    str('DynamicAdminViewPermissionModelAdmin'),
+                    (admin_class, AdminViewPermissionModelAdmin),
+                    dict(admin_class.__dict__),
+                )
+        else:
+            admin_class = AdminViewPermissionModelAdmin
+
+        return admin_class
+
     def register(self, model_or_iterable, admin_class=None, **options):
         """
         Create a new ModelAdmin class which inherits from the original and
         the above and register all models with that
         """
-        SETTINGS_MODELS = getattr(settings, 'ADMIN_VIEW_PERMISSION_MODELS',
-                                  None)
+        SETTINGS_MODELS = getattr(
+            settings, 'ADMIN_VIEW_PERMISSION_MODELS', None)
 
         models = model_or_iterable
         if not isinstance(model_or_iterable, (tuple, list)):
             models = tuple([model_or_iterable])
+
+        is_user_model = settings.AUTH_USER_MODEL in [
+            get_model_name(i) for i in models]
 
         if SETTINGS_MODELS or (SETTINGS_MODELS is not None and len(
                 SETTINGS_MODELS) == 0):
             for model in models:
                 model_name = get_model_name(model)
                 if model_name in SETTINGS_MODELS:
-                    if admin_class:
-                        admin_class = type(
-                            str('DynamicAdminViewPermissionModelAdmin'),
-                            (admin_class, AdminViewPermissionModelAdmin),
-                            dict(admin_class.__dict__))
-                    else:
-                        admin_class = AdminViewPermissionModelAdmin
+                    admin_class = self._get_admin_class(
+                        admin_class, is_user_model)
 
-                super(AdminViewPermissionAdminSite, self).register([model],
-                                                                   admin_class,
-                                                                   **options)
+                super(AdminViewPermissionAdminSite, self).register(
+                    [model], admin_class, **options)
         else:
-            if admin_class:
-                admin_class = type(str('DynamicAdminViewPermissionModelAdmin'),
-                                   (
-                                       admin_class,
-                                       AdminViewPermissionModelAdmin),
-                                   dict(admin_class.__dict__))
-            else:
-                admin_class = AdminViewPermissionModelAdmin
-
+            admin_class = self._get_admin_class(admin_class, is_user_model)
             super(AdminViewPermissionAdminSite, self).register(
-                model_or_iterable,
-                admin_class, **options)
+                model_or_iterable, admin_class, **options)
 
     def _build_app_dict(self, request, label=None):
         """
