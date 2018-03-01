@@ -335,7 +335,7 @@ class AdminViewPermissionUserAdmin(AdminViewPermissionModelAdmin):
                 "user's password."
             )
         else:
-            form.base_fields['password'].help_text = _(
+            form.base_fields['password2'].help_text = _(
                 "Raw passwords are not stored, so there is no way to see this "
                 "user's password, but you can change the password using "
                 "<a href=\"../password/\">this form</a>."
