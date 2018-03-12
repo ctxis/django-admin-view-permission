@@ -327,19 +327,27 @@ class AdminViewPermissionUserAdmin(AdminViewPermissionModelAdmin):
         form = super(AdminViewPermissionUserAdmin, self).get_form(
             request, obj, **kwargs)
 
+        if 'password' in form.base_fields:
+            password_field = form.base_fields['password']
+        elif 'password2' in form.base_fields:
+            password_field = form.base_fields['password2']
+        else:
+            password_field = None
+
         # TODO: I don't like this at all. Find another way to change the
         # TODO: help_text
         if not self._has_change_only_permission(request):
-            form.base_fields['password'].help_text = _(
+            password_field.help_text = _(
                 "Raw passwords are not stored, so there is no way to see this "
                 "user's password."
             )
         else:
-            form.base_fields['password'].help_text = _(
-                "Raw passwords are not stored, so there is no way to see this "
-                "user's password, but you can change the password using "
-                "<a href=\"../password/\">this form</a>."
-            )
+            if password_field:
+                password_field.help_text = _(
+                    "Raw passwords are not stored, so there is no way to see this "
+                    "user's password, but you can change the password using "
+                    "<a href=\"../password/\">this form</a>."
+                )
 
         return form
 
