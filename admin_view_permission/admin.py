@@ -14,6 +14,7 @@ from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import PermissionDenied
 from django.utils.encoding import force_text
+from django.utils.module_loading import import_string
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 
@@ -327,6 +328,11 @@ class AdminViewPermissionUserAdmin(AdminViewPermissionModelAdmin):
         form = super(AdminViewPermissionUserAdmin, self).get_form(
             request, obj, **kwargs)
 
+        UserCreationForm = import_string(
+            'django.contrib.auth.forms.UserCreationForm')
+        if UserCreationForm in form.__bases__:
+            return form
+
         if 'password' in form.base_fields:
             password_field = form.base_fields['password']
         elif 'password2' in form.base_fields:
@@ -344,9 +350,9 @@ class AdminViewPermissionUserAdmin(AdminViewPermissionModelAdmin):
         else:
             if password_field:
                 password_field.help_text = _(
-                    "Raw passwords are not stored, so there is no way to see this "
-                    "user's password, but you can change the password using "
-                    "<a href=\"../password/\">this form</a>."
+                    "Raw passwords are not stored, so there is no way to see "
+                    "this user's password, but you can change the password "
+                    "using <a href=\"../password/\">this form</a>."
                 )
 
         return form
