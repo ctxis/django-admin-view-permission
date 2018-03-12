@@ -192,6 +192,13 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
                     f for f in readonly_fields if f not in excluded_fields
                 ]
 
+            # django-parler compatibility: if this model is translatable,
+            # ensure its fields are set to readonly too.
+            if hasattr(self.model, '_parler_meta'):
+                readonly_fields += list(
+                    self.model._parler_meta._fields_to_model.keys()
+                )
+
         return tuple(readonly_fields)
 
     def get_actions(self, request):

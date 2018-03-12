@@ -17,3 +17,9 @@ mock
 # Docs
 sphinx
 sphinx-autobuild
+
+# To test django-parler compatibility
+django-parler==1.9.1
+
+# To parse HTML in tests
+beautifulsoup4==4.6.0

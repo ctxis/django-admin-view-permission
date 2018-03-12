@@ -63,6 +63,13 @@ class DataMixin(object):
         cls.delete_permission_model1 = Permission.objects.get(
             name='Can delete test model1')
 
+        cls.view_permission_model1parler = Permission.objects.get(
+            name='Can view testmodelparler'
+        )
+        cls.view_permission_model1parlertranslation = Permission.objects.get(
+            name='Can view testmodelparlertranslation'
+        )
+
         cls.add_permission_model4 = Permission.objects.get(
             name='Can add test model4')
         cls.view_permission_model4 = Permission.objects.get(
@@ -110,6 +117,16 @@ class AdminViewPermissionViewsTestCase(DataMixin, TestCase):
         cls.user_with_vd_perm_on_moedl1.user_permissions.add(
             cls.view_permission_model1,
             cls.delete_permission_model1,
+        )
+
+        cls.user_with_v_perm_on_model1parler = create_simple_user(
+            username='user_with_v_perm_on_model1parler'
+        )
+        cls.user_with_v_perm_on_model1parler.user_permissions.add(
+            cls.view_permission_model1parler,
+        )
+        cls.user_with_v_perm_on_model1parler.user_permissions.add(
+            cls.view_permission_model1parlertranslation,
         )
 
         cls.super_user = create_super_user(username='super_user')
