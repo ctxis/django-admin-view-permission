@@ -352,8 +352,8 @@ class AdminViewPermissionUserAdmin(AdminViewPermissionModelAdmin):
             # TODO: help_text
             if not self._has_change_only_permission(request):
                 password_field.help_text = _(
-                    "Raw passwords are not stored, so there is no way to see this "
-                    "user's password."
+                    "Raw passwords are not stored, so there is no way to "
+                    "see this user's password."
                 )
             else:
                 password_field.help_text = _(
