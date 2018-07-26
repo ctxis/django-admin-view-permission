@@ -201,6 +201,19 @@ class AdminViewPermissionBaseModelAdmin(admin.options.BaseModelAdmin):
 
         return tuple(readonly_fields)
 
+    def get_prepopulated_fields(self, request, obj=None):
+        """
+        If user has view only permission do not return any prepopulated
+        configuration, since it fails when creating a form
+        """
+        is_add = obj is None and self.has_add_permission(request)
+        is_change = obj is not None \
+            and self._has_change_only_permission(request, obj)
+        if is_add or is_change:
+            return super(AdminViewPermissionBaseModelAdmin, self)\
+                .get_prepopulated_fields(request, obj)
+        return {}
+
     def get_actions(self, request):
         """
         Override this funciton to remove the actions from the changelist view
