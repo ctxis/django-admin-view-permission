@@ -18,6 +18,7 @@ env:
   - DJANGO_VERSION=1.10.*
   - DJANGO_VERSION=1.11.*
   - DJANGO_VERSION=2.0.*
+  - DJANGO_VERIONS=2.1.*
 
 # install dependencies
 install:
