@@ -17,6 +17,8 @@ def django_version():
         return DjangoVersion.DJANGO_111
     elif django.get_version().startswith('2.0'):
         return DjangoVersion.DJANGO_20
+    elif django.get_version().startswith('2.1'):
+        return DjangoVersion.DJANGO_21
 
 
 def get_model_name(model):
