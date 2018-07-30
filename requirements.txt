@@ -1,2 +1,2 @@
-Django>=2.0; python_version > '2.7'
+Django>=2.0,<2.1; python_version > '2.7'
 Django>=1.8,<2.0; python_version <= '2.7'
