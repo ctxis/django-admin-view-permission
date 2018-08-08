@@ -39,4 +39,13 @@ Make sure that ``'django.contrib.admin'`` is set up properly and add
 
 Finally, run ``python manage.py migrate`` to create the view permissions.
 
+In case of a customized AdminSite in order to apply the view permission, you
+should inherit from the ```AdminViewPermissionAdminSite``` class::
+
+    from admin_view_permission.admin import AdminViewPermissionAdminSite
+
+    class MyAdminSite(AdminViewPermissionAdminSite):
+        ...
+
+
 .. _pip: https://pip.pypa.io/
