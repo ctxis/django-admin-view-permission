@@ -844,22 +844,17 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
         'ActionParam', 'name, request_user, modeladmin_func, result')
 
     action_params = [
-        # Add objects
-        # Weird but the default implementation return the delete action
-        # so we trust the view to return PermissionDenied
         ActionParams(
             name='simple_user_without_permissions',
             request_user=RequestUser('user_without_permissions', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: len(x) == 1},
+            result={'get_actions': lambda x: len(x) == 0},
         ),
-        # Weird but the default implementation return the delete action
-        # so we trust the view to return PermissionDenied
         ActionParams(
             name='add_from_a_simple_user_with_add_permission',
             request_user=RequestUser('user_with_a_perm_on_model1', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: len(x) == 1},
+            result={'get_actions': lambda x: len(x) == 0},
         ),
         ActionParams(
             name='add_from_a_simple_user_with_view_permission',
@@ -871,7 +866,7 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             name='add_from_a_simple_user_with_change_permission',
             request_user=RequestUser('user_with_c_perm_on_model1', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: len(x) == 1},
+            result={'get_actions': lambda x: len(x) == 0},
         ),
         ActionParams(
             name='add_from_a_simple_user_with_delete_permission',
@@ -889,7 +884,7 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             name='add_from_a_simple_user_with_change_view_permission',
             request_user=RequestUser('user_with_cv_perm_on_model1', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: len(x) == 1},
+            result={'get_actions': lambda x: len(x) == 0},
         ),
         ActionParams(
             name='add_from_a_simple_user_with_delete_view_permission',
@@ -901,7 +896,7 @@ class TestAdminViewPermissionBaseModelAdmin(DataMixin, TestCase):
             name='add_from_a_simple_user_with_add_view_change_permission',
             request_user=RequestUser('user_with_avc_perm_on_model1', 'add'),
             modeladmin_func=_modeladmin_simple,
-            result={'get_actions': lambda x: len(x) == 1},
+            result={'get_actions': lambda x: len(x) == 0},
         ),
         ActionParams(
             name='add_from_a_simple_user_with_all_permissions',
