@@ -1,7 +1,7 @@
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
     README = readme.read()
@@ -17,7 +17,8 @@ else:
 setup(
     name='django-admin-view-permission',
     version='1.8',
-    packages=['admin_view_permission'],
+    #packages=['admin_view_permission'],
+    packages=find_packages(),
     include_package_data=True,
     license='BSD License',
     description='A simple Django app which adds view permissions.',
