@@ -1,5 +1,5 @@
 from .utils import get_model_name
-from __future__ import unicode_literals
+from __future__ import unicode_literals  # noqa
 from collections import OrderedDict
 from django.apps import apps
 from django.conf import settings

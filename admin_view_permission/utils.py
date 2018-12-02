@@ -1,5 +1,5 @@
 from .enums import DjangoVersion
-from __future__ import unicode_literals
+from __future__ import unicode_literals  # noqa
 from django.contrib.auth.management import _get_all_permissions
 
 import django

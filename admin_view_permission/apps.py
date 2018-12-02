@@ -1,6 +1,6 @@
 from .admin import AdminViewPermissionAdminSite
 from .utils import get_model_name
-from __future__ import unicode_literals
+from __future__ import unicode_literals  # noqa
 from django.apps import AppConfig
 from django.apps import apps as global_apps
 from django.conf import settings

@@ -1,5 +1,5 @@
 from .models import *  # noqa: F403
-from __future__ import unicode_literals
+from __future__ import unicode_literals  # noqa
 from admin_view_permission import admin as view_admin
 from django.contrib import admin
 from parler.admin import TranslatableAdmin
