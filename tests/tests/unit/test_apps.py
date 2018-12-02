@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
+
 from django.apps import apps
 from django.db import models
 from django.db.models.signals import post_migrate
-from django.test import override_settings, TestCase
+from django.test import TestCase, override_settings
 
 
 class TestAdminViewPermissionConfig(TestCase):

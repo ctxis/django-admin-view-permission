@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
-from admin_view_permission.admin import AdminViewPermissionModelAdmin
+
 from django.contrib import admin
 from django.test import SimpleTestCase
+
+from admin_view_permission.admin import AdminViewPermissionModelAdmin
 
 
 class TestTestAppModelAdminOverride(SimpleTestCase):

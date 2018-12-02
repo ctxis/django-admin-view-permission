@@ -1,11 +1,13 @@
-from .admin import AdminViewPermissionAdminSite
-from .utils import get_model_name
-from __future__ import unicode_literals  # noqa
+from __future__ import unicode_literals
+
 from django.apps import AppConfig
 from django.apps import apps as global_apps
 from django.conf import settings
 from django.contrib import admin
 from django.db.models.signals import post_migrate
+
+from .admin import AdminViewPermissionAdminSite
+from .utils import get_model_name
 
 
 def update_permissions(sender, app_config, verbosity, apps=global_apps,

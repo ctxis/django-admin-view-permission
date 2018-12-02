@@ -1,31 +1,33 @@
 from __future__ import unicode_literals
+
+from collections import OrderedDict, namedtuple
+
+import pytest
+from django import forms
+from django.contrib import admin
+from django.contrib.admin import AdminSite
+from django.test import (
+    RequestFactory,
+    SimpleTestCase,
+    TestCase,
+    override_settings,
+)
+from model_mommy import mommy
+from nose_parameterized import parameterized
+
 from admin_view_permission.admin import (
     AdminViewPermissionAdminSite,
     AdminViewPermissionInlineModelAdmin,
     AdminViewPermissionModelAdmin,
 )
-from collections import namedtuple, OrderedDict
-from django import forms
-from django.contrib import admin
-from django.contrib.admin import AdminSite
-from django.test import (
-    override_settings,
-    RequestFactory,
-    SimpleTestCase,
-    TestCase,
-)
-from model_mommy import mommy
-from nose_parameterized import parameterized
 from tests.test_app.admin import ModelAdmin1
 from tests.test_app.models import TestModel1, TestModel5
 from tests.tests.helpers import (
+    DataMixin,
     create_simple_user,
     create_super_user,
     create_urlconf,
-    DataMixin,
 )
-
-import pytest
 
 try:
     from django.urls import reverse

@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
+
+from django.test import SimpleTestCase
+
 from admin_view_permission.enums import DjangoVersion
 from admin_view_permission.utils import django_version
-from django.test import SimpleTestCase
 
 try:
     from unittest.mock import patch

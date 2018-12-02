@@ -1,6 +1,7 @@
-from .utils import get_model_name
-from __future__ import unicode_literals  # noqa
+from __future__ import unicode_literals
+
 from collections import OrderedDict
+
 from django.apps import apps
 from django.conf import settings
 from django.contrib import admin
@@ -16,6 +17,8 @@ from django.utils.encoding import force_text
 from django.utils.module_loading import import_string
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
+
+from .utils import get_model_name
 
 try:
     from django.urls import NoReverseMatch, reverse

@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
+
 from bs4 import BeautifulSoup
 from django import VERSION
 from django.conf import settings
 from django.test import override_settings
 from model_mommy import mommy
+
 from tests.tests.helpers import AdminViewPermissionViewsTestCase
 
 try:
