@@ -6,6 +6,7 @@
 # Some dirs
 .idea
 dist
+build
 *.egg-info
 env
 venv
