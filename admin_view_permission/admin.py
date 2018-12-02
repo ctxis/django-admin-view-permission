@@ -45,10 +45,9 @@ def submit_row(context):
 
 
 class AdminViewPermissionChangeList(ChangeList):
-    def __init__(self, *args, **kwargs):
-        super(AdminViewPermissionChangeList, self).__init__(*args, **kwargs)
-        # TODO: Exam if is None
-        self.request = args[0]
+    def __init__(self, request, *args, **kwargs):
+        super(AdminViewPermissionChangeList, self).__init__(request, *args, **kwargs)
+        self.request = request
 
         # If user has only view permission change the title of the changelist
         # view
