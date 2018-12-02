@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import warnings
+
 from django.apps import AppConfig
 from django.apps import apps as global_apps
 from django.conf import settings
@@ -7,7 +9,8 @@ from django.contrib import admin
 from django.db.models.signals import post_migrate
 
 from .admin import AdminViewPermissionAdminSite
-from .utils import get_model_name
+from .enums import DjangoVersion
+from .utils import django_version, get_model_name
 
 
 def update_permissions(sender, app_config, verbosity, apps=global_apps,
@@ -38,6 +41,16 @@ class AdminViewPermissionConfig(AppConfig):
     name = 'admin_view_permission'
 
     def ready(self):
+        if django_version() == DjangoVersion.DJANGO_21:
+            # Disable silently the package for Django => 2.1. We don't override
+            # admin_site neither the default ModelAdmin.
+            warnings.warn(
+                'The package `admin_view_permission is deprecated in '
+                'Django 2.1. Django added this functionality into the core.',
+                DeprecationWarning
+            )
+            return
+
         if not isinstance(admin.site, AdminViewPermissionAdminSite):
             admin.site = AdminViewPermissionAdminSite('admin')
             admin.sites.site = admin.site

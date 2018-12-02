@@ -22,6 +22,17 @@ Requirements
 Support
 -------
 
+    The package is *deprecated* for *Django 2.1*. Django added the functionality
+    into the `core <https://docs.djangoproject.com/en/2.1/releases/2.1/#model-view-permission>`_ (
+    the 2 implementations are different). You should use this package only if you
+    use Django < 2.1.
+
+        * If you have installed this package by accident to your Django 2.1
+          project, it won't affect the build-in view permission which comes
+          with Django.
+        * If you have upgraded you application to use Django > 2.1 just uninstall
+          this package
+
 * Django: 1.8, 1.9, 1.10, 1.11, 2.0
 * Python: 2.7, 3.4, 3.5, 3.6
 
