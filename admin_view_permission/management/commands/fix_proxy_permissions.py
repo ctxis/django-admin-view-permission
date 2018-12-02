@@ -1,12 +1,11 @@
-import copy
-
+from admin_view_permission.apps import update_permissions
+from admin_view_permission.utils import get_all_permissions
 from django.apps import apps
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 
-from admin_view_permission.apps import update_permissions
-from admin_view_permission.utils import get_all_permissions
+import copy
 
 
 class Command(BaseCommand):

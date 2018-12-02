@@ -1,9 +1,8 @@
+from .enums import DjangoVersion
 from __future__ import unicode_literals
-
-import django
 from django.contrib.auth.management import _get_all_permissions
 
-from .enums import DjangoVersion
+import django
 
 
 def django_version():
