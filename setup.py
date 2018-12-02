@@ -12,7 +12,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 if sys.version_info.major > 2:
     install_requires = ['Django>=1.8']
 else:
-    install_requires = ['Django>=1.8,<2.1']
+    install_requires = ['Django>=1.8,<2.0']
 
 setup(
     name='django-admin-view-permission',
